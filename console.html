@@ -89,14 +89,17 @@ color: #FFFFFF !important;
                                         <div class="tab-content">
                                             <div class="tab-pane" id="tab-commands">
                                                 <form class="well" action="#">
-                                                    <label>Eval</label>
-                                                    <textarea class="span3" placeholder="alert(/place code to eval in this tab here/)"></textarea>
+                                                    <h4>Eval</h4>
+                                                    <textarea name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
+                                                    <p>
                                                     <button id=eval type="button" class="btn btn-primary">Eval</button>
-                                                    <label>Result</label>
-                                                    <textarea class="span3" id=eval-result placeholder="result will be placed here."></textarea>
+                                                    </p>
+                                                    <h4>Result</h4>
+                                                    <textarea style="width: 100%; height: 300px" id=eval-result placeholder="result will be placed here."></textarea>
                                                 </form>
                                             </div>
                                             <div class="tab-pane" id="tab-html">
+                                                <p><button id=report-html type=button class="btn btn-primary">Get HTML</button></p>
                                                 <textarea id=tab-current-html style="width: 100%; height: 300px">
                                                 </textarea>
                                             </div>
@@ -111,9 +114,6 @@ color: #FFFFFF !important;
                                                 </tr>
                                                 <tr>
                                                 <th>localStorage</th><td><textarea style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
-                                                </tr>
-                                                <tr>
-                                                <th>HTML</th><td><textarea style="width: 100%; height:200px" data-fld=html></textarea></td>
                                                 </tr>
                                                 </tbody>
                                                 </table>
@@ -151,7 +151,7 @@ color: #FFFFFF !important;
                             
                             <form action="#">
                                 <label>Eval</label>
-                                <textarea class="span3" placeholder="alert(/place code to eval in extension/)"></textarea>
+                                <textarea name=eval-ext class="span3" placeholder="alert(/place code to eval in extension/)"></textarea>
                                 <button type="button" id=eval-ext class="btn btn-primary">Eval</button>
                                 <label>Result</label>
                                 <textarea id=eval-ext-result class="span3" placeholder="result will be placed here."></textarea>
@@ -314,6 +314,7 @@ function processResponse(r, hook) {
     switch (r.type) {
         case 'recvstuff':
             hookStorage.updateTab(hook, r.id, r.result);
+            refreshTabsTable(hookStorage.getTabs(hook));
         break;
         case 'recveval':
             if (!r.id) {
@@ -338,14 +339,19 @@ function processResponse(r, hook) {
 $(function() {
     
     $('#eval-ext').click(function() {
-        sendCmd('eval', $(this).prev().val());
+        sendCmd('eval', $('[name=eval-ext]').val());
         $('#eval-ext-result').val('');
     });
 
     $('#eval').click(function() {
-        sendCmd('eval', $(this).prev().val(), {id: currentTab});
+        sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
         $('#eval-result').val('');
-    });    
+    });
+
+    $('#report-html').click(function() {
+        sendCmd('reporthtml', null, {id: currentTab});
+    });
+    
     $('#ping').click(function() {
         sendCmd('ping');
     });    
