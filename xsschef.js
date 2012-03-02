@@ -2,11 +2,6 @@
  * @author Krzysztof Kotowicz
  *
  */
-/*
-todo:
- - screenshots
-*/
-
 function __xsschef() {
     // start scripts
     // this script gets executed in sheepchannel tab context, it's written here only for syntax highlighting & easy editing
