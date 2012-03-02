@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_GET['ch'])) {
         echo json_encode(array());
     } else {
         echo json_encode($_SESSION[$_GET['ch']]);
-        $_SESSION[$_GET['ch']] = array();
+        unset($_SESSION[$_GET['ch']]);
     }
 } else { // echo available not-empty channels
     // get channel list
