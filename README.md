@@ -46,3 +46,32 @@ Once you found a vulnarable extension, inject it with CheF hook script. See 'hoo
 
 ### Exploit ###
 Once code has been injected and run, a notification should be sent to console, so you can choose the hook by clicking on a 'choose hooked browser' icon on the left and start exploiting.
+
+How does it work?
+=================
+
+
+                   ATTACKER                                VICTIM(S)
+
+                                                                          +------------+
+                                                                          |  tab 1     |
+                                                                 command  | http://..  |
+                                                               +---------->            |
+                                                               |          +------------+
+                                                               |
+       +------------+                              +-----------+-+
+       |  console   |                              | addon w/XSS |  result+------------+
+       |            |   +-------------+  (XHR/WS)  |             |<------+|  tab 2     |
+       |            |+->| ChEF server |<----------+|             |+------>+ https://.. |
+       |            |<-+|             |+---------->|  ChEF hook  |        |            |
+       |            |   +-------------+            |             |        +------------+
+       +------------+                              +-----------+-+
+                                                               |
+                                                               |          +------------+
+                                                               |          |  tab 3     |
+                                                               +----------> https://.. |
+                                                                          |            |
+                                                                          +------------+
+                                                                          
+Chrome addons usually have permissions to access inidividual tabs in the browser. They can also inject JS code into those tabs. So addons are theoretically cabable of doing a global XSS on any tab. When there is a exploitable XSS vulnerability within a Chrome addon, attacker (with ChEF server) can do exactly that. Script injected into Chrome extension (ChEF hook served from a ChEF server) installs JS code into every tab it has access to. This JS code listens for various commands from the addon and responds to them. And ChEF-hooked addon receives commands and responds to them by connecting to CHeF server on attackers machine (using XMLHttpRequest or WebSockets connection). Attacker has also a nice web-based UI console to control this whole XSS-based botnet.
+

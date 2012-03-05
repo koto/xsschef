@@ -18,12 +18,16 @@ color: #FFFFFF !important;
 .modal {
 display:none;
 }
-
+.wide-modal {
+    top: 3em;
+    width: 800px;
+    margin: 0 0 0 -400px; /* -1 * (width / 2) */ 
+}
 .mono {
 font-family: Menlo, Monaco, "Courier New", monospace;
 }
 #alert {
-position: absolute;
+position: fixed;
 top: 45px;
 right: 20px;
 display:none;
@@ -72,7 +76,7 @@ display:none;
                                     </td>
                                     <td class="url">
                                         <a href=# target=_blank data-attr=href data-fld=url><i class="icon-share"></i></a>
-                                        <img data-fld=favIconUrl data-attr=src src="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" />
+                                        <img data-fld=favIconUrl style="max-width:16px;max-height:16px" data-attr=src src="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" />
                                         <span data-fld=title></span>
                                     </td>
                                     </tr>
@@ -252,7 +256,7 @@ display:none;
   </div>
 </div>
 
-<div class="modal" id="readme-modal">
+<div class="modal wide-modal" id="readme-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
     <h3>Readme</h3>

