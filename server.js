@@ -75,7 +75,7 @@ console.log("by Krzysztof Kotowicz");
 console.log("");
 console.log("Usage: node server.js [port]");
 server.listen(port, function() {
-    console.log((new Date()) + ' Server is listening on port ' + port);
+    console.log((new Date()) + 'ChEF server is listening on port ' + port);
 });
 
 wsServer = new WebSocketServer({
@@ -161,7 +161,7 @@ wsServer.on('request', function(request) {
                     pushToHook(connection.channel);
                     connections.forEach(function(c) {
                         if (c.isC2C) {
-                            c.sendUTF(JSON.stringify([[{type:'new_hook', result: payload.ch + ' - ' + connection.remoteAddress}]]));
+                            c.sendUTF(JSON.stringify([[{type:'server_msg', result: 'New hook: '+ payload.ch + ' - ' + connection.remoteAddress}]]));
                         }
                     });
                     
@@ -213,6 +213,10 @@ wsServer.on('request', function(request) {
             // remove the connection from the pool
             connections.splice(index, 1);
         }
-
+        connections.forEach(function(c) {
+            if (c.isC2C) {
+                c.sendUTF(JSON.stringify([[{type:'server_msg', result: 'Hook '+ connection.channel + ' - ' + connection.remoteAddress + ' disconnected.'}]]));
+            }
+        });
     });
 });

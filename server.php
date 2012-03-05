@@ -1,14 +1,10 @@
 <?php
 /*
-server passing messages
-ch - channel (req)
-
-
+PHP based CheF server supporting XHR communication
 */
 header('Access-Control-Allow-Origin: *');
 ini_set('session.use_cookies', false);
-ini_set('display_errors', true);
-session_id('dummy'); // use PHP sessions for persistent storage
+session_id('djummy'); // use PHP sessions for persistent storage
 session_start();
 
 
@@ -38,6 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_GET['ch'])) {
         unset($_SESSION[$_GET['ch']]);
     }
 } else { // echo available not-empty channels
+    $list = array();
     // get channel list
-    echo json_encode(array_values(array_filter(array_keys($_SESSION), 'nocmds')));
+    foreach (array_filter(array_keys($_SESSION), 'nocmds') as $channel) {
+        $list[] = array('ch' => $channel);
+    }
+    
+    echo json_encode($list);
 }
