@@ -4,7 +4,7 @@ PHP based CheF server supporting XHR communication
 */
 header('Access-Control-Allow-Origin: *');
 ini_set('session.use_cookies', false);
-session_id('djummy'); // use PHP sessions for persistent storage
+session_id('dummy'); // use PHP sessions for persistent storage
 session_start();
 
 

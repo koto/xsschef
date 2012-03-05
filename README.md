@@ -6,7 +6,7 @@ v.0.1
 
 About
 -----
-This is a Chrome Extension Exploitation Framework - think [BeEF](http://www.bindshell.net/tools/beef.html) for Chrome extensions.
+This is a Chrome Extension Exploitation Framework - think [BeEF](http://beefproject.com/) for Chrome extensions.
 Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will ease the exploitation.
 
 What can you actually do (when having appropriate permissions)?

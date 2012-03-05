@@ -7,6 +7,8 @@ todo:
  - chrome.cookies interface
  - link extractor & navigation
  - remove tab
+ - let the beef hook work somehow
+ - 
 */
 function __xsschef() {
 
