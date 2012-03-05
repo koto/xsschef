@@ -44,6 +44,8 @@ This is similar to looking for XSS in webpages, but totally different, as there 
 
 Once you found a vulnarable extension, inject it with CheF hook script. See 'hook' menu item in console UI for the hook code.
 
+ChEF ships with an exemplary XSS-able chrome addon in `vulnerable_chrome_extension` directory. Install this unpackaged extension (Tools, Extensions, Developer mode, load unpacked extension) in Chrome to test.
+
 ### Exploit ###
 Once code has been injected and run, a notification should be sent to console, so you can choose the hook by clicking on a 'choose hooked browser' icon on the left and start exploiting.
 
