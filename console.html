@@ -175,10 +175,14 @@ display:none;
             <input id="tab-create-url" style="padding:0" placeholder="http://example.com/" />
                             <form action="#">
                                 <label>Eval</label>
-                                <textarea name=eval-ext class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
+                                <select id="eval-ext-snippets">
+                                <option value="">Choose code snippet...</option>
+                                </select>&nbsp;<a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">See extension API docs</a>
+                                <br />
+                                <textarea name=eval-ext style="height: 150px" class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
                                 <p><button type="button" id=eval-ext class="btn btn-secondary">Eval</button></p>
                                 <label>Result</label>
-                                <textarea id=eval-ext-result class="mono span8" placeholder="result will be placed here."></textarea>
+                                <textarea id=eval-ext-result style="height: 150px" class="mono span8" placeholder="result will be placed here."></textarea>
                             </form>
                             
                         </div>
@@ -617,6 +621,32 @@ for (i=0;i<document.scripts.length;i++) {\n\
 s.push(document.scripts[i].src || document.scripts[i].textContent);\n\
 }\n\
 s;';
+    ext_snippets = {};
+    
+    ext_snippets['get cookies'] = '//extension needs cookies permission\n\
+chrome.cookies.getAll({\n\
+  // comment out following line to get cookies for all domains\n\
+  url:"https://www.google.com/"\n\
+}, function(cookies) {\n\
+  log({type:"recveval",result: cookies});\n\
+})'
+    ext_snippets['set cookie'] = "chrome.cookies.set({\n\
+  url: 'https://www.google.com/',\n\
+  name: 'test-chef',\n\
+  value: 'test-ok',\n\
+  secure: true,\n\
+  httpOnly: true,\n\
+  expirationDate: 1417390624, // unix timestamp or null for session cookie\n\
+  path: '/'\n\
+}, function(c) {\n\
+  log({type:'recveval',result: c});\n\
+})";
+    ext_snippets['remove cookie'] = "chrome.cookies.remove({\n\
+  url: 'https://www.google.com/',\n\
+  name: 'test-chef'\n\
+}, function(c) {\n\
+  log({type:'recveval',result: c});\n\
+})";
 
     $("#eval-snippets").change(function() {
     	var val = $(this).val();
@@ -630,7 +660,21 @@ s;';
 		if (snippets.hasOwnProperty(i)) {
 			$('#eval-snippets').append($('<option>').val(i).text(i));
 		}
-	}  
+	}
+
+    $("#eval-ext-snippets").change(function() {
+    	var val = $(this).val();
+    	console.log(val);    	
+    	if (val && ext_snippets[val]) {
+    		$('textarea[name=eval-ext]').val(ext_snippets[val]);
+    	}
+	});
+	
+	for (var i in ext_snippets) { // populate snippets
+		if (ext_snippets.hasOwnProperty(i)) {
+			$('#eval-ext-snippets').append($('<option>').val(i).text(i));
+		}
+	}
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
     al("Refreshed state from local storage");
