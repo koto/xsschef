@@ -97,6 +97,9 @@ display:none;
                                             <div class="tab-pane" id="tab-commands">
                                                 <form class="well" action="#">
                                                     <h4>Eval</h4>
+                                                    <select class="pull-right" id="eval-snippets">
+                                                    <option value="">Choose code snippet...</option>
+                                                    </select>
                                                     <textarea class=mono name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
                                                     <button id=eval type="button" class="btn btn-primary">Eval</button>
                                                     </p>
@@ -596,11 +599,43 @@ $(function() {
             }
         }, 2000);
     }
+
+	var snippets = {};
+	snippets['xhr'] = "x = new XMLHttpRequest();\n\
+x.onreadystatechange = function() {\n\
+if (x.readyState == 4) {\n\
+   __p.postMessage({cmd:'recveval', p: x.responseText});\n\
+}\n\
+};\n\
+x.open('GET','/',true);\n\
+x.send(null);\n\
+";
+	snippets['alert'] = 'alert(/xss/);';
+	snippets['location'] = 'location;';
+	snippets['listscripts'] = 'var s = [];\n\
+for (i=0;i<document.scripts.length;i++) {\n\
+s.push(document.scripts[i].src || document.scripts[i].textContent);\n\
+}\n\
+s;';
+
+    $("#eval-snippets").change(function() {
+    	var val = $(this).val();
+    	console.log(val);    	
+    	if (val && snippets[val]) {
+    		$('textarea[name=eval]').val(snippets[val]);
+    	}
+	});
+	
+	for (var i in snippets) { // populate snippets
+		if (snippets.hasOwnProperty(i)) {
+			$('#eval-snippets').append($('<option>').val(i).text(i));
+		}
+	}  
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
     al("Refreshed state from local storage");
     fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
-    $.get('README.md', function(t) { console.log(t);$('#readme').text(t) });
+    $.get('README.md', function(t) { $('#readme').text(t) });
 });
 </script>
 </body>
