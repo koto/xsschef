@@ -11,11 +11,11 @@ todo:
  - 
 */
 function __xsschef() {
-
     if (window.__xsschef_init) { // prevent double inclusion
-    	return;
-	}
-	
+        return;
+    }
+    window.__xsschef_init = true;
+
     // these scripts gets executed in sheepchannel tab context, they're written here only for syntax highlighting & easy editing
     // START scripts
     var sheepchannel_script = function(msg) {
@@ -23,7 +23,7 @@ function __xsschef() {
         switch (msg.cmd) {
             case 'sendhtml':
                 var links = [];
-                
+
                 var nodes = document.getElementsByTagName('a');
                 for (var i = 0; i < nodes.length; i++) {
                     if (nodes[i].href) {
@@ -41,7 +41,7 @@ function __xsschef() {
         }
     }
     
-    var backchannel_script = function(msg) {
+    var backchannel_script = function() {
         var url = '__URL__';
 
         if (url.match(/^http/)) { // http backchannel
@@ -279,7 +279,6 @@ function __xsschef() {
                 log('alive');
             }, 20000);
         }
-        window.__xsschef_init = true;
     }
 };
 
