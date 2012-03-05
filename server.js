@@ -86,7 +86,9 @@ wsServer = new WebSocketServer({
     // *always* verify the connection's origin and decide whether or not
     // to accept it.
     autoAcceptConnections: false,
-    disableNagleAlgorithm: false
+    maxReceivedFrameSize: 1024*1024*10, // 10 MB max
+    maxReceivedMessageSize: 1024*1024*10
+    //disableNagleAlgorithm: false
 });
 
 function originIsAllowed(origin) {
@@ -157,7 +159,7 @@ wsServer.on('request', function(request) {
                     connection.isHook = true;
                     connection.isC2C = false;
                     connection.channel = payload.ch;
-                    console.log('New hook ' + payload.ch + ' from ' + connection.remoteAddress);
+                    console.log('New hook ' + connection.channel + ' from ' + connection.remoteAddress);
                     pushToHook(connection.channel);
                     connections.forEach(function(c) {
                         if (c.isC2C) {
@@ -206,7 +208,7 @@ wsServer.on('request', function(request) {
     });
 
     connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected - ' + reasonCode + ' ' + description);
 
         var index = connections.indexOf(connection);
         if (index !== -1) {
