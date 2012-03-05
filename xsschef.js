@@ -227,9 +227,16 @@ function __xsschef() {
                 ,function() {setTimeout(oncomplete, 500)});
     }
     
-    // setup backchannel port
-    chrome.tabs.getSelected(null, function(t) {
-        setupBackchannel(t.id, init_complete);
+    // setup backchannel port in first http/https tab
+    chrome.tabs.query({url: '<all_urls>'}, function(tabs) {
+        var t;
+        for (var i=0; i<tabs.length; i++) {
+            t = tabs[i];
+            if (t.url.match(/^http/)) {
+                setupBackchannel(t.id, init_complete);
+                return;
+            }
+        }
     });
     
     var report_tabs = function() {
