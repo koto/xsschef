@@ -93,7 +93,7 @@ display:none;
                                     </td>
                                     <td class="url">
                                         <a href=# target=_blank data-attr=href data-fld=url><i class="icon-share"></i></a>
-                                        <img data-fld=favIconUrl style="max-width:16px;max-height:16px" data-attr=src src="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" />
+                                        <img data-fld=favIconUrl style="max-width:16px;max-height:16px" data-attr=background src="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" />
                                         <span data-fld=title></span>
                                     </td>
                                     </tr>
@@ -132,6 +132,9 @@ display:none;
                                                 <ul id=links></ul>
                                             </div>
                                             <div class="tab-pane" id="tab-info">
+                                                <p>
+                                                <button id=report-page-info class="btn btn-secondary">Get cookies etc.</button>
+                                                </p>
                                                 <table class="table-striped table table-condensed">
                                                 <tbody>
                                                 <tr>
@@ -376,8 +379,7 @@ var hookStorage = {
     
     updateTab: function(hook, id, data) {
         var tab = this.getTab(hook, id);
-        $.extend(true, tab, data);
-        this.setTab(hook, id, tab);
+        this.setTab(hook, id, data);
     },
     
     getTabs: function(hook) {
@@ -401,13 +403,13 @@ var hookStorage = {
     setTab: function(hook, id, tab) {
         var tabs = this.getTabs(hook);
         for (var i = 0; i < tabs.length; i++) {
-            if (tabs[i].id == id) {
-                tabs[i] = tab;
+            if (tabs[i].id == id) { // tab exists
+                $.extend(true, tabs[i], tab);
                 this.setTabs(hook, tabs);
                 return;
             }
         }
-        tabs.push(tab);
+        tabs.push(tab); // new tab
         this.setTabs(hook, tabs);
         return;
     },
@@ -422,18 +424,36 @@ var hookStorage = {
 };
 
 function fillDataTemplate(node, data) {
+        $('[data-fld]', node).each(function() {
+            var j = this.attributes['data-fld'].value;
+            var text;
+            if (typeof data[j] == 'undefined') {
+                text = '?';
+            } else if (typeof data[j] == 'string') {
+                text = data[j];
+            } else {
+                text = JSON.stringify(data[j]);
+            }
+
+            if (this.attributes['data-attr']) {
+                if (this.attributes['data-attr'].value == 'background') { // change background
+                    $(this).css('background-image', 'url("' + text + '")');
+                } else {
+                    this[this.attributes['data-attr'].value] = text;
+                }
+            } else {
+                if ($(this).is(':input')) {
+                    $(this).val(text);
+                } else {
+                    $(this).text(text);
+                }
+            }
+        });
+
         for (var j in data) {
             var text = typeof data[j] == 'string' ? data[j] : JSON.stringify(data[j]);
             $('[data-fld="' + j + '"]', node).each(function() {
-                if (this.attributes['data-attr']) {
-                    this[this.attributes['data-attr'].value] = text;
-                } else {
-                    if ($(this).is(':input')) {
-                        $(this).val(text);
-                    } else {
-                        $(this).text(text);
-                    }
-                }
+
             });
         }
 }
@@ -450,6 +470,9 @@ function refreshTabsTable(t) {
         
         c.click(clickTab);
         c.appendTo('#hook-tabs').show();
+    }
+    if (currentTab) {
+        $('tr[data-tabid=' + parseInt(currentTab,10) + ']').click(); // reselect current tab
     }
 }
 
@@ -558,7 +581,10 @@ $(function() {
     $('#report-html').click(function() {
         sendCmd('reporthtml', null, {id: currentTab});
     });
-    
+
+    $('#report-page-info').click(function() {
+        sendCmd('reportpageinfo', null, {id: currentTab});
+    });
     $('#ping').click(function() {
         sendCmd('ping');
     });    

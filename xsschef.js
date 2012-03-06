@@ -195,6 +195,9 @@ function __xsschef() {
                     report_page_info();
                     report_ext();
                 break;
+                case 'reportpageinfo':
+                        postToSheep(msg.id, {cmd: 'sendinfo'});
+                break;
                 case 'reporthtml':
                         postToSheep(msg.id, {cmd: 'sendhtml'});
                 break;
