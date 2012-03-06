@@ -14,6 +14,7 @@ What can you actually do (when having appropriate permissions)?
   - Monitor open tabs of victims
   - Execute JS on every tab (global XSS)
   - Extract HTML, read/write cookies (also httpOnly), localStorage
+  - Get and manipulate browser history
   - Stay persistent until whole browser is closed (or even futher if you can persist in extensions' localStorage)
   - Make screenshot of victims window
   - Further exploit e.g. via attaching BeEF hooks, keyloggers etc.
