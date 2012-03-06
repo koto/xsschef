@@ -670,7 +670,6 @@ chrome.history.deleteUrl({\n\
 
     $("#eval-snippets").change(function() {
     	var val = $(this).val();
-    	console.log(val);    	
     	if (val && snippets[val]) {
     		$('textarea[name=eval]').val(snippets[val]);
     	}
@@ -684,7 +683,6 @@ chrome.history.deleteUrl({\n\
 
     $("#eval-ext-snippets").change(function() {
     	var val = $(this).val();
-    	console.log(val);    	
     	if (val && ext_snippets[val]) {
     		$('textarea[name=eval-ext]').val(ext_snippets[val]);
     	}
