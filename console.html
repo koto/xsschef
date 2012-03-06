@@ -238,7 +238,7 @@ display:none;
   <div class="modal-body">
   <p>Each hook below represents single browser session that XSS has been activated in. Chose one you'd like to
   exploit:</p>
-  <select name="choose-hook">
+  <select size=10 class="input-xlarge" name="choose-hook">
   </select>
   </div>
   <div class=modal-footer>
@@ -512,7 +512,7 @@ function al(txt) {
 
 function processResponse(r, hook) {
     if (typeof r == 'string' || !r.type) {
-        log(JSON.stringify(r));
+        log(r);
         console.log(r);
         return;
     }
@@ -529,10 +529,11 @@ function processResponse(r, hook) {
         break;        
         case 'recveval':
             al('Received eval response.');
+            var result = (typeof r.result == 'string' ? r.result : JSON.stringify(r.result));
             if (!r.id) {
-                $('#eval-ext-result').val(JSON.stringify(r.result));
+                $('#eval-ext-result').val(result);
             } else {
-                $('#eval-result').val(JSON.stringify(r.result));
+                $('#eval-result').val(result);
             }
         break;
         case 'report_tabs':
@@ -546,7 +547,7 @@ function processResponse(r, hook) {
         break;
         case 'pong':
             al('Pong from ' + r.url);
-            log('pong ' + r.url);
+            log('pong from ' + r.url);
         break;
         case 'server_msg':
             al(r.result);
@@ -634,7 +635,6 @@ $(function() {
             }
             var $s = $('select[name="choose-hook"]').html('');
             $s.append($('<option>').text('choose...'));
-            
             for (var i =0; i < json.length; i++) {
                 var text = json[i].ch + ' - ' + json[i].ip + ' ' + json[i].lastActive;
                 $('<option>').text(text).val(json[i].ch).appendTo($s);
