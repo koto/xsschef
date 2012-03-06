@@ -19,6 +19,10 @@ What can you actually do (when having appropriate permissions)?
   - Make screenshot of victims window
   - Further exploit e.g. via attaching BeEF hooks, keyloggers etc.
 
+Demo
+----
+See http://youtu.be/KmIG2EKLP2M for a demonstrational video.
+
 Installation & usage
 ------------
 ### Setup CHeF server (on attacker's machine)
