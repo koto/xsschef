@@ -15,7 +15,6 @@
 	"tabs", 
 	"cookies",
 	"history",
-	"http://*/*", 
-	"https://*/*"
+	"<all_urls>"
   ]
 }

