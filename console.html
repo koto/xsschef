@@ -690,6 +690,19 @@ chrome.history.deleteUrl({\n\
     ext_snippets['do I have file:// access?'] = "chrome.extension.isAllowedFileSchemeAccess(function(yes) {\n\
     log({type:'recveval',result: yes});\n\
     })";
+    
+    ext_snippets['get manifest'] = "x = new XMLHttpRequest();\n\
+x.onreadystatechange = function() {\n\
+   var d;\n\
+  try {\n\
+    d=JSON.parse(x.responseText);\n\
+ } catch (e) {d=x.responseText}\n\
+if (x.readyState == 4) {\n\
+   log({type:'recveval', result:d});\n\
+}\n\
+};\n\
+x.open('GET','/manifest.json',true);\n\
+x.send(null);";
 
     $("#eval-snippets").change(function() {
     	var val = $(this).val();
