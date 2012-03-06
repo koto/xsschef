@@ -687,6 +687,10 @@ chrome.history.deleteUrl({\n\
   url: 'http://www.example.com/'\n\
 })";
 
+    ext_snippets['do I have file:// access?'] = "chrome.extension.isAllowedFileSchemeAccess(function(yes) {\n\
+    log({type:'recveval',result: yes});\n\
+    })";
+
     $("#eval-snippets").change(function() {
     	var val = $(this).val();
     	if (val && snippets[val]) {

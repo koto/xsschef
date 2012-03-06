@@ -18,6 +18,7 @@ What can you actually do (when having appropriate permissions)?
   - Stay persistent until whole browser is closed (or even futher if you can persist in extensions' localStorage)
   - Make screenshot of victims window
   - Further exploit e.g. via attaching BeEF hooks, keyloggers etc.
+  - Explore filesystem through file:// protocol
 
 Demo
 ----
