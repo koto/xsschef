@@ -87,3 +87,20 @@ Chrome addons usually have permissions to access inidividual tabs in the browser
 
 Script injected into Chrome extension (ChEF hook served from a ChEF server) moves to extension background page and installs JS code into every tab it has access to. This JS code listens for various commands from the addon and responds to them. And ChEF-hooked addon receives commands and responds to them by connecting to CHeF server on attackers machine (using XMLHttpRequest or WebSockets connection). Attacker has also a nice web-based UI console to control this whole XSS-based botnet.
 
+Licence
+-------
+XSS ChEF - Chrome Extension Exploitation framework
+Copyright (C) 2012  Krzysztof Kotowicz - http://blog.kotowicz.net
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see http://www.gnu.org/licenses/.

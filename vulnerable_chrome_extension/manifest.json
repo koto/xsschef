@@ -1,10 +1,6 @@
 {
-  //originally created by Nithin Bekal
   "name": "ChEF vulnerable extension example (TodoList)",
   "version": "1.0",
-  // when the browser icon is clicked, a new tab is open to maintain persistence (chrome.tabs.create)
-  // for the sake of testing...unfortunately the popup is closed when the user is not focusing on it.
-  // See at the end of index.html file.
   "description": "A simple todo list in HTML5 with localStorage, vulnerable to XSS. Use to test ChEF. Forked from BeEF - http://beefproject.com/",
   "browser_action": {
     "default_icon": "favicon.ico",
