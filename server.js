@@ -179,7 +179,7 @@ wsServer.on('request', function(request) {
                     connection.isC2C = false;
                     connection.channel = payload.ch;
                     console.log('New hook ' + connection.channel + ' from ' + connection.remoteAddress);
-                    pushToHook(connection.channel);
+                    pushToHook(connection.channel); // send pending messages
                     connections.forEach(function(c) {
                         if (c.isC2C) {
                             c.sendUTF(JSON.stringify([[{type:'server_msg', result: 'New hook: '+ payload.ch + ' - ' + connection.remoteAddress}]]));
