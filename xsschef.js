@@ -191,10 +191,31 @@ function __xsschef() {
                 case 'ping':
                     log({type: 'pong', id: port.tab.id, url: port.tab.url});
                 break;
+                case 'focus':
+                	chrome.tabs.update(msg.id, {active: true});
+                break;
                 case 'screenshot':
-                    chrome.tabs.captureVisibleTab(null,null, function(data_url) {
-                        log({type:'recvscreenshot', url: data_url});
-                    });
+                	if (msg.id) { // try to capture other tab
+                		chrome.tabs.query({active: true}, function(tabs) {
+                			var prev_id;
+	               			if (tabs[0]) {
+                				prev_id = tabs[0].id;
+                				// switch tabs
+                				chrome.tabs.update(msg.id, {active: true}, function(t) {
+                					// take screenshot
+				                    chrome.tabs.captureVisibleTab(null,null, function(data_url) {
+				                        log({type:'recvscreenshot', url: data_url});
+				                        // switch tabs back
+				                        chrome.tabs.update(prev_id, {active: true});
+				                    });
+								});
+							}
+						});
+					} else { // capture current tab
+	                    chrome.tabs.captureVisibleTab(null,null, function(data_url) {
+	                        log({type:'recvscreenshot', url: data_url});
+	                    });
+                    }
                 break;
                 case 'report':
                     report_tabs();
