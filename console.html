@@ -103,9 +103,12 @@ display:none;
                                     </tbody>
                                     </table>
 
-                                <h4>Legend</h4>
+                                <h5>Legend</h5>
                                 <p></p>
                                 <ul class="unstyled">
+                                <li><i class="icon-list"></i> choose hooked browser session</li>
+                                <li><i class="icon-refresh"></i> refresh tab list from session</li>
+                                <li><i class="icon-share"></i> launch URL in this browser</li>
 								<li><i class="icon-exclamation-sign"></i> launching this might be visible in hooked browser</li>
 								<ul>
                                 </div>
@@ -119,18 +122,18 @@ display:none;
                                         <div id=current-tab class="tab-content">
                                             <div class="tab-pane" id="tab-commands">
                                                 <p>
-												<button id=do-focus class='btn btn-secondary'>Set focus <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
-												<button id=do-tab-screenshot class='btn btn-secondary'><i class="icon-picture"></i> Screenshot <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+												<button id=do-focus class='btn btn-secondary' title="Set focus on this tab">Set focus <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+												<button id=do-tab-screenshot title="Take a screenshot" class='btn btn-secondary'><i class="icon-picture"></i> Screenshot <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
 												</p>
                                                 <form action="#">
-                                                    <h4>Eval</h4>
+                                                    <h5>Eval</h5>
                                                     <select class="pull-right" id="eval-snippets">
                                                     <option value="">Choose code snippet...</option>
                                                     </select>
+                                                    <p class="help-block">Use __p.postMessage({cmd:'recveval', p: xxx}); to return results asynchronously.</p>
                                                     <textarea class=mono name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
-                                                    <button id=eval type="button" class="btn btn-primary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign icon-white"></i></button>
+                                                    <button id=eval type="button" class="btn btn-secondary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button>
                                                     </p>
-                                                    <h4>Result</h4>
                                                     <textarea class=mono style="width: 100%; height: 300px" id=eval-result placeholder="result will be placed here."></textarea>
                                                 </form>
                                             </div>
@@ -174,7 +177,7 @@ display:none;
                         <th>Hook ID</th><td id=hook-id></td>
                         </tr>
                         <tr>
-                        <th>URL</th><td data-fld=extension></td>
+                        <th>Extension URL</th><td data-fld=extension></td>
                         </tr>
                         <tr>
                         <th>Permissions</th><td class=mono data-fld=permissions></td>
@@ -187,7 +190,7 @@ display:none;
                         <th>localStorage</th><td><textarea class=mono style="width: 100%; height: 200px" data-fld=localStorage></textarea></td>
                         </tr>
                         <tr>
-                        <th>HTML</th><td><textarea style="width: 100%; height:200px" data-fld=html></textarea></td>
+                        <th>Extension HTML</th><td><textarea style="width: 100%; height:200px" data-fld=html></textarea></td>
                         </tr>
 
                         </tbody>
@@ -203,18 +206,17 @@ display:none;
             </ul>
                         <div class=control-group>
 
-            <label>Create new tab <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></label>
-            <input id="tab-create-url" style="padding:0" placeholder="http://example.com/" />
+            <h5>Create new tab <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></h5>
+            <input id="tab-create-url" style="padding:0" placeholder="http://example.com/enter-to-open" />
                             <form action="#">
-                                <label>Eval</label>
+                                <h5>Eval</h5>
                                 <select id="eval-ext-snippets">
                                 <option value="">Choose code snippet...</option>
-                                </select>&nbsp;<a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">See extension API docs</a>
-                                <br />
+                                </select>
+                                <p class="help-block">Use log({type:'recveval',result: xxx}); to return result asynchronously, also <a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">see extension API docs</a></p>
                                 <textarea name=eval-ext style="height: 150px" class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
                                 <p><button type="button" id=eval-ext class="btn btn-secondary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button></p>
-                                <label>Result</label>
-                                <textarea id=eval-ext-result style="height: 150px" class="mono span8" placeholder="result will be placed here."></textarea>
+                                <textarea id=eval-ext-result style="height: 150px" class="mono span8" placeholder="eval result will be placed here."></textarea>
                             </form>
                             
                         </div>
