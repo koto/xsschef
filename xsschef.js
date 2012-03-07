@@ -236,7 +236,7 @@ function __xsschef() {
                         }, function(cookies) {
                             cookstr = "";
                             cookies.forEach(function(cookie) {
-                                cookstr += encodeURIComponent(cookie.name) + '; ' + encodeURIComponent(cookie.value); 
+                                cookstr += encodeURIComponent(cookie.name) + '=' + encodeURIComponent(cookie.value)+'; '; 
                             });
                         });
 
