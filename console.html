@@ -118,7 +118,7 @@ display:none;
                                                     <option value="">Choose code snippet...</option>
                                                     </select>
                                                     <textarea class=mono name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
-                                                    <button id=eval type="button" class="btn btn-primary">Eval</button>
+                                                    <button id=eval type="button" class="btn btn-primary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign icon-white"></i></button>
                                                     </p>
                                                     <h4>Result</h4>
                                                     <textarea class=mono style="width: 100%; height: 300px" id=eval-result placeholder="result will be placed here."></textarea>
@@ -128,7 +128,7 @@ display:none;
                                                 <p><button id=report-html type=button class="btn btn-primary">Get HTML</button></p>
                                                 <textarea data-fld=html id=tab-current-html style="width: 100%; height: 300px">
                                                 </textarea>
-                                                <h5>Links (click to navigate in tab)</h5>
+                                                <h5>Links (click to navigate in tab) <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></h5>
                                                 <ul id=links></ul>
                                             </div>
                                             <div class="tab-pane" id="tab-info">
@@ -189,11 +189,11 @@ display:none;
                                <ul class="nav nav-pills">
             <li><button id=fix-server class='btn btn-secondary'><i class="icon-fire"></i> Fix server</button></li>
             <li><button id=ping class='btn btn-secondary'>Ping</button></li>
-            <li><button id=do-screenshot class='btn btn-secondary'><i class="icon-picture"></i> Screenshot</button></li>
+            <li><button id=do-screenshot class='btn btn-secondary'><i class="icon-picture"></i> Screenshot </button></li>
             </ul>
                         <div class=control-group>
 
-            <label>Create new tab</label>
+            <label>Create new tab <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></label>
             <input id="tab-create-url" style="padding:0" placeholder="http://example.com/" />
                             <form action="#">
                                 <label>Eval</label>
@@ -202,7 +202,7 @@ display:none;
                                 </select>&nbsp;<a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">See extension API docs</a>
                                 <br />
                                 <textarea name=eval-ext style="height: 150px" class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
-                                <p><button type="button" id=eval-ext class="btn btn-secondary">Eval</button></p>
+                                <p><button type="button" id=eval-ext class="btn btn-secondary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button></p>
                                 <label>Result</label>
                                 <textarea id=eval-ext-result style="height: 150px" class="mono span8" placeholder="result will be placed here."></textarea>
                             </form>
