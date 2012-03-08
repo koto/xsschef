@@ -19,6 +19,7 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 var fs = require('fs');
+var url = require('url');
 var static = require('node-static');
 
 var fileserver = new(static.Server)('.');
@@ -64,6 +65,13 @@ var server = http.createServer(function(request, response) {
         });
         response.writeHead(200, {'content-type' : 'application/json'});
         response.end(JSON.stringify(hooks));
+        return;
+    }
+    
+    if (request.url.match(/\/echo\?/)) {
+        var params = url.parse(request.url, true);
+        response.writeHead(200, {'content-type' : 'text/javascript'});
+        response.end(params.query.c);
         return;
     }
     

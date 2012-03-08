@@ -2,7 +2,9 @@ XSS ChEF - Chrome Extension Exploitation Framework
 ======
 
 by [Krzysztof Kotowicz](http://blog.kotowicz.net)
-v.0.1
+ver 0.1
+
+https://github.com/koto/xsschef
 
 About
 -----
@@ -19,6 +21,7 @@ What can you actually do (when having appropriate permissions)?
   - Make screenshot of victims window
   - Further exploit e.g. via attaching BeEF hooks, keyloggers etc.
   - Explore filesystem through file:// protocol
+  - Bypass Chrome extensions content script sandbox to interact directly with page JS
 
 Demo
 ----
@@ -39,6 +42,8 @@ Node.js version requires a [node.js](http://nodejs.org/) installation and is muc
 Installation:
 
     $ npm install websocket
+      // windows users: npm install websocket@1.0.3
+      // see https://github.com/Worlize/WebSocket-Node/issues/28
     $ npm install node-static
     $ node server.js [chosen-tcp-port]
     
@@ -50,7 +55,7 @@ Installation:
 First, you have to find a XSS vulnerability in a Google Chrome addon. I won't help you here.
 This is similar to looking for XSS in webpages, but totally different, as there are way more DOM based XSSes than reflected ones and the debugging is different.
 
-Once you found a vulnarable extension, inject it with CheF hook script. See 'hook' menu item in console UI for the hook code.
+Once you found a vulnerable extension, inject it with CheF hook script. See 'hook' menu item in console UI for the hook code.
 
 ChEF ships with an exemplary XSS-able chrome addon in `vulnerable_chrome_extension` directory. Install this unpackaged extension (Tools, Extensions, Developer mode, load unpacked extension) in Chrome to test.
 
@@ -86,6 +91,17 @@ How does it work?
 Chrome addons usually have permissions to access inidividual tabs in the browser. They can also inject JS code into those tabs. So addons are theoretically cabable of doing a global XSS on any tab. When there is a exploitable XSS vulnerability within a Chrome addon, attacker (with ChEF server) can do exactly that. 
 
 Script injected into Chrome extension (ChEF hook served from a ChEF server) moves to extension background page and installs JS code into every tab it has access to. This JS code listens for various commands from the addon and responds to them. And ChEF-hooked addon receives commands and responds to them by connecting to CHeF server on attackers machine (using XMLHttpRequest or WebSockets connection). Attacker has also a nice web-based UI console to control this whole XSS-based botnet.
+
+Exploitability requirements
+===========================
+Vulnerable extension needs to have:
+
+  - `tabs` permissions
+  - origin permission for sites you want to interact with - ideally, `<all_urls>` or `http://*/*`
+  - background page for the code to persist. ChEF will try to work anyways, but it will be very limited in functionality.
+  - no [CSP](http://code.google.com/chrome/extensions/trunk/contentSecurityPolicy.html) restrictions i.e. [manifest v1.0 in Chrome 18+](http://blog.chromium.org/2012/02/more-secure-extensions-by-default.html)
+  
+To be able to read/write cookies, `cookies` permission is needed, though you can get non httpOnly cookies with `eval()`. To manipulate history, `history` permission is needed.
 
 Licence
 -------
