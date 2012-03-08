@@ -6,6 +6,8 @@ ver 0.1
 
 https://github.com/koto/xsschef
 
+![Logo by Gareth Heyes](bootstrap/img/xss-chef.png)
+
 About
 -----
 This is a Chrome Extension Exploitation Framework - think [BeEF](http://beefproject.com/) for Chrome extensions.
