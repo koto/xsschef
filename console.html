@@ -22,7 +22,26 @@
 <title>XSS ChEF console</title>
 <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/>
 <style>
-body {padding-top: 50px;}
+body {
+padding-top: 50px;
+}
+
+#logo {
+min-height: 170px;
+background: url(bootstrap/img/xss-chef-medium.png) right 20px no-repeat;
+
+}
+
+#about-modal {
+    width: 620px;
+    marzgin: 0 0 0 -300px; /* -1 * (width / 2) */ 
+}
+
+#about-modal .modal-body {
+background: url(bootstrap/img/xss-chef.png) 95% top no-repeat;
+padding-right: 220px;
+}
+
 span,td,th {font-size: 11px; line-height: 14px;}
 #tabs-container {
 overflow-y: auto;
@@ -57,7 +76,7 @@ display:none;
         <ul class="nav pull-right">
             <li><a href="#about-modal" data-toggle=modal>About</a></li>
             <li><a href="#readme-modal" data-toggle=modal>Readme</a></li>
-            <li><a href="#hook-modal" data-toggle=modal>Hook</a></li>
+            <li><a href="#hook-modal" data-toggle=modal>Hook code</a></li>
         </ul>
             <a class="brand"  href="#">XSS ChEF - Chrome Extension Exploitation Framework</a>
         </div>
@@ -110,7 +129,8 @@ display:none;
                                 <li><i class="icon-refresh"></i> refresh tab list from session</li>
                                 <li><i class="icon-share"></i> launch URL in this browser</li>
 								<li><i class="icon-exclamation-sign"></i> launching this might be visible in hooked browser</li>
-								<ul>
+								</ul>
+								<p><a class="btn btn-secondary" href="#hook-modal" data-toggle=modal>Get hook code</a></p>
                                 </div>
                                 <div class="span8">
                                     <div class="tabbable">
@@ -214,9 +234,9 @@ display:none;
                                 <option value="">Choose code snippet...</option>
                                 </select>
                                 <p class="help-block">Use log({type:'recveval',result: xxx}); to return result asynchronously, also <a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">see extension API docs</a></p>
-                                <textarea name=eval-ext style="height: 150px" class="mono span8" placeholder="alert(/place code to eval in extension/)"></textarea>
+                                <textarea name=eval-ext style="height: 150px" class="mono span12" placeholder="alert(/place code to eval in extension/)"></textarea>
                                 <p><button type="button" id=eval-ext class="btn btn-secondary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button></p>
-                                <textarea id=eval-ext-result style="height: 150px" class="mono span8" placeholder="eval result will be placed here."></textarea>
+                                <textarea id=eval-ext-result style="height: 150px" class="mono span12" placeholder="eval result will be placed here."></textarea>
                             </form>
                             
                         </div>
@@ -224,14 +244,14 @@ display:none;
                 </div>
             </div>
         <div class="row">
-            <div class="span12">
-                <form>
+            <div class="span10">
                     <label>Log</label>
                         <textarea id='log' style="width: 100%; height: 150px;"></textarea>
                     </div>
-                </div>
+            <div id="logo" class="span2">
             </div>
-            
+        </div>
+    </div>        
 <div class="modal" id="screenshot-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
@@ -265,10 +285,9 @@ display:none;
     <h3>About XSS ChEF</h3>
   </div>
   <div class="modal-body">
-      <h2>XSS ChEF</h2>
+      <h2><a href="https://github.com/koto/xsschef/">XSS ChEF </a><small>ver 0.1</small></h2>
       <h3>Chrome Extension Exploitation Framework</h3>
-      <address>by <a href="http://blog.kotowicz.net">Krzysztof Kotowicz</a></address>
-      <p>v.0.1</p>
+      <address>by <a href="http://blog.kotowicz.net">Krzysztof Kotowicz</a></address><address> Logo design by <a href="http://www.thespanner.co.uk/">Gareth Heyes</a></address>
       <h4>About</h4>
       <p>This is a Chrome Extension Exploitation Framework - think <a href="http://beefproject.com/">BeEF</a> for Chrome extensions.
       Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will ease the exploitation.
@@ -286,7 +305,7 @@ display:none;
 <div class="modal" id="hook-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
-    <h3>Hook</h3>
+    <h3>Hook code</h3>
   </div>  
     <div class="modal-body">
       <p>First, you need to find a XSS vulnerable Chrome extension. I won't help here. Once you've found it, inject Chrome extension with a hook vector:
