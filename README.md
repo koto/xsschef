@@ -6,7 +6,7 @@ ver 0.1
 
 https://github.com/koto/xsschef
 
-![Logo by Gareth Heyes](bootstrap/img/xss-chef.png)
+![Logo by Gareth Heyes](https://github.com/koto/xsschef/raw/master/bootstrap/img/xss-chef.png)
 
 About
 -----
