@@ -119,11 +119,11 @@ function originIsAllowed(origin) {
 }
 
 function push(channel, flagName, container) {
-	var sent = false;
+    var sent = false;
     connections.forEach(function(c) {
-    	if (sent) { 
-			return;
-		}
+        if (sent) { 
+            return;
+        }
         if (c[flagName] && c.channel == channel) {
            var toSend = container[channel];
            if (toSend) {

