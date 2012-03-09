@@ -40,6 +40,7 @@ background: url(bootstrap/img/xss-chef-medium.png) right 20px no-repeat;
 #about-modal .modal-body {
 background: url(bootstrap/img/xss-chef.png) 95% top no-repeat;
 padding-right: 220px;
+min-height: 300px;
 }
 
 span,td,th {font-size: 11px; line-height: 14px;}
@@ -95,7 +96,7 @@ display:none;
                 <div class="tab-content">
                     <div class="tab-pane active" id="tab-tabs">
                         <div class="row">
-                            <div class="span4" id="tabs-container">
+                            <div class="span5" id="tabs-container">
                                 <table class="table-striped table table-condensed">
                                 <thead>
                                 <tr>
@@ -134,7 +135,7 @@ display:none;
                                 </ul>
                                 <p><a class="btn btn-secondary" href="#hook-modal" data-toggle=modal>Get hook code</a></p>
                                 </div>
-                                <div class="span8">
+                                <div class="span7">
                                     <div class="tabbable">
                                         <ul class="nav nav-tabs">
                                             <li class="active"><a href="#tab-info" class='active' data-toggle="tab">Info</a></li>
@@ -292,18 +293,9 @@ display:none;
       <h2><a href="https://github.com/koto/xsschef/">XSS ChEF </a><small>ver 0.1</small></h2>
       <h3>Chrome Extension Exploitation Framework</h3>
       <address>by <a href="http://blog.kotowicz.net">Krzysztof Kotowicz</a></address><address> Logo design by <a href="http://www.thespanner.co.uk/">Gareth Heyes</a></address>
-      <h4>About</h4>
       <p>This is a Chrome Extension Exploitation Framework - think <a href="http://beefproject.com/">BeEF</a> for Chrome extensions.
       Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will ease the exploitation.
-      <p>What can you actually do (when having appropriate permissions)?</p>
-      <ul>
-      <li>Monitor open tabs of victims</li>
-      <li>Execute JS on every tab (global XSS)</li>
-      <li>Extract HTML, read/write cookies (also httpOnly), localStorage</li>
-      <li>Stay persistent until whole browser is closed (or even futher if you can persist in extensions' localStorage)</li>
-      <li>Make screenshot of your window</li>
-      <li>Further exploit e.g. via attaching BeEF hooks, keyloggers etc.</li>
-      </ul>
+      </p>
   </div>
   </div>
 <div class="modal" id="hook-modal">
