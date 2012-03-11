@@ -97,7 +97,9 @@ console.log("by Krzysztof Kotowicz");
 console.log("");
 console.log("Usage: node server.js [port]");
 server.listen(port, function() {
-    console.log((new Date()) + 'ChEF server is listening on port ' + port);
+    console.log((new Date()) + ' ChEF server is listening on port ' + port);
+    console.log((new Date()) + ' Console URL: http://127.0.0.1:' + port + '/');
+    console.log((new Date()) + ' Hook URL:    http://127.0.0.1:' + port + '/hook');
 });
 
 wsServer = new WebSocketServer({

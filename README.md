@@ -27,7 +27,7 @@ What can you actually do (when having appropriate permissions)?
 
 Demo
 ----
-See http://youtu.be/KmIG2EKLP2M for a demonstrational video.
+See http://youtu.be/KmIG2EKLP2M for a demonstrational video. BeEF hooking: http://youtu.be/uonVWh0QO1A
 
 Installation & usage
 ------------
