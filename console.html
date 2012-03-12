@@ -85,6 +85,7 @@ display:none;
 </div>
 <div class="container">
     <div class="row">
+        <div class="span12">
             <div class="tabbable">
                 <ul class="nav nav-tabs">
                     <li><button title="Choose hooked session" id=choose-hook class='btn btn-secondary'><i class="icon-list"></i></button>&nbsp;&nbsp;</li>
@@ -256,7 +257,8 @@ display:none;
             <div id="logo" class="span2">
             </div>
         </div>
-    </div>        
+    </div>
+</div>
 <div class="modal" id="screenshot-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
@@ -335,6 +337,10 @@ var ws;
 var hook = localStorage['lastHook'] || '';
 var currentTab = null;
 
+function prettyPrint(m) {
+    return (typeof m == 'string' ? m : JSON.stringify(m, undefined, 3));
+}
+
 if (document.location.pathname == '/') { // served through Node.js, use websockets
     if (MozWebSocket) {
         WebSocket = MozWebSocket;
@@ -379,7 +385,7 @@ var sendCmd = function(cmd, param, additional) {
 };
 
 function log(m) {
-       var text = (typeof m == 'string' ? m : JSON.stringify(m));
+       var text = prettyPrint(m);
         $("#log")[0].value += text + "\n";
         $('#log')[0].scrollTop = 9999999;
 }
@@ -459,10 +465,8 @@ function fillDataTemplate(node, data) {
             var text;
             if (typeof data[j] == 'undefined') {
                 text = '?';
-            } else if (typeof data[j] == 'string') {
-                text = data[j];
             } else {
-                text = JSON.stringify(data[j]);
+                text = prettyPrint(data[j]);
             }
 
             if (this.attributes['data-attr']) {
@@ -479,13 +483,6 @@ function fillDataTemplate(node, data) {
                 }
             }
         });
-
-        for (var j in data) {
-            var text = typeof data[j] == 'string' ? data[j] : JSON.stringify(data[j]);
-            $('[data-fld="' + j + '"]', node).each(function() {
-
-            });
-        }
 }
 
 function refreshTabsTable(t) {
@@ -556,7 +553,7 @@ function processResponse(r, hook) {
         break;        
         case 'recveval':
             al('Received eval response.');
-            var result = (typeof r.result == 'string' ? r.result : JSON.stringify(r.result));
+            var result = prettyPrint(r.result);
             if (!r.id) {
                 $('#eval-ext-result').val(result);
             } else {

