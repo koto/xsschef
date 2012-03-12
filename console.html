@@ -338,7 +338,10 @@ var hook = localStorage['lastHook'] || '';
 var currentTab = null;
 
 function prettyPrint(m) {
-    return (typeof m == 'string' ? m : JSON.stringify(m, undefined, 3));
+    if (typeof m == 'string') {
+        return m === "" ? '""' : m;
+    }
+    return JSON.stringify(m, undefined, 3);
 }
 
 if (document.location.pathname == '/') { // served through Node.js, use websockets
@@ -552,12 +555,16 @@ function processResponse(r, hook) {
             break;
         break;        
         case 'recveval':
-            al('Received eval response.');
             var result = prettyPrint(r.result);
-            if (!r.id) {
-                $('#eval-ext-result').val(result);
+            if (result == undefined) {
+                al('Eval response was undefined');
             } else {
-                $('#eval-result').val(result);
+                al('Received eval response.');
+                if (!r.id) {
+                    $('#eval-ext-result').val(result);
+                } else {
+                    $('#eval-result').val(result);
+                }
             }
         break;
         case 'report_tabs':

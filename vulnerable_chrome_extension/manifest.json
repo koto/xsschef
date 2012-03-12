@@ -12,6 +12,7 @@
 	"cookies",
 	"history",
 	"management",
+	"proxy",
 	"<all_urls>"
   ]
 }
