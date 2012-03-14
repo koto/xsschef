@@ -187,7 +187,7 @@ display:none;
                                                     <select class="pull-right" id="eval-snippets">
                                                     <option value="">Choose code snippet...</option>
                                                     </select>
-                                                    <p class="help-block">Use __p.postMessage({cmd:'recveval', p: xxx}); to return results asynchronously.</p>
+                                                    <p class="help-block">Use __logEval(object); to return results asynchronously.</p>
                                                     <textarea class=mono name=eval style="width: 100%; height: 100px" placeholder="alert(/place code to eval in this tab here/)"></textarea>
                                                     <button id=eval title="Evaluate code in Chrome content script sandbox - you can't call page original JS" type="button" class="btn btn-secondary">Eval<i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button>
                                                     <button id=eval-no-sandbox title="Try to evaluate code outside Chrome content script sandbox by attaching dynamic &lt;script&gt;. No results will be available." type="button" class="btn btn-secondary">Eval outside sandbox (experimental, blind) <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button>
@@ -271,7 +271,7 @@ display:none;
                                 <select id="eval-ext-snippets">
                                 <option value="">Choose code snippet...</option>
                                 </select>
-                                <p class="help-block">Use log({type:'recveval',result: xxx}); to return result asynchronously, also <a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">see extension API docs</a></p>
+                                <p class="help-block">Use __logEval(object) to return result asynchronously, also <a target=_blank href="http://code.google.com/chrome/extensions/api_index.html">see extension API docs</a></p>
                                 <textarea name=eval-ext style="height: 150px" class="mono span12" placeholder="alert(/place code to eval in extension/)"></textarea>
                                 <p><button type="button" id=eval-ext class="btn btn-secondary">Eval <i title="Effect might be visible in hooked browser" class="icon-exclamation-sign"></i></button></p>
                                 <textarea id=eval-ext-result style="height: 150px" class="mono span12" placeholder="eval result will be placed here."></textarea>

