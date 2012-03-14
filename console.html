@@ -69,6 +69,7 @@ display:none;
 }
 .mono {
 font-family: Menlo, Monaco, "Courier New", monospace;
+white-space: pre;
 }
 #alert {
 position: fixed;
@@ -104,28 +105,60 @@ display:none;
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane" id="tab-persistent-scripts">
-                        <p>Persistent scripts are scripts that are run on hooked browser tabs
-                           on every page load if the URL matches given regexp.
-                        </p>
-                        <h5>Active scripts</h5>
-                        <ul id="persistent-script-list">
-                        <li style=display:none id=persistent-script-template><span data-fld=name></span> - <code data-fld=urlmatch>http://*</code> <a href="#" data="" data-fld="name" data-attr="data" class="remove-persistent-script btn btn-secondary"><i class="icon-remove"></i></a></li>
+                        <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#tab-persistent-scripts-manage">Manage</a></li>
+                        <li><a data-toggle="tab" href="#tab-persistent-scripts-log">Results log</a></li>
                         </ul>
-                        <h5>Add persistent script</h5>
-                        <form id=add-persistent-script action="#">
-                        <label>Name</label>
-                        <input name="name" placeholder="anything you like" />
-                        <label>When tab URL matches</label>
-                        <input name="urlmatch" placeholder="^http:" /><span class="help-inline">JS RegExp style</span>
-                        <label>Launch this code:</label>
-                        <select id="persistent-snippets">
-                            <option value="">Choose code snippet...</option>
-                        </select><br />
-                        <textarea name=code class="span12" style="height: 150px" placeholder="alert(/onload/)"></textarea>
-                        <label class=checkbox>
-                            <input type=checkbox name=run_now value=1 />Run now for existing tabs </label>
-                        <p><button class="btn btn-secondary">Add script</button></p>
-                        </form>
+                        <div class="tab-content">
+                        <div class="tab-pane active" id="tab-persistent-scripts-manage">
+                            <p>Persistent scripts are scripts that are run on hooked browser tabs
+                               on every page load if the URL matches given regexp.
+                            </p>
+                            <h5>Active scripts</h5>
+                            <ul id="persistent-script-list">
+                            <li style=display:none id=persistent-script-template><strong data-fld=name></strong>: <code data-fld=code></code> on <code data-fld=urlmatch>http://*</code> <a href="#" data="" data-fld="name" data-attr="data" title="remove script" class="remove-persistent-script btn btn-secondary"><i class="icon-remove"></i></a></li>
+                            </ul>
+                            <h5>Add persistent script</h5>
+                            <form id=add-persistent-script action="#">
+                            <label>Name</label>
+                            <input name="name" placeholder="anything you like" />
+                            <label>When tab URL matches</label>
+                            <input name="urlmatch" placeholder="^http:" /> <span class="help-inline">Enter <a href="https://developer.mozilla.org/en/JavaScript/Guide/Regular_Expressions" target="_blank">Javascript RegExp</a></span>
+                            <label>Launch this code:</label>
+                            <select id="persistent-snippets">
+                                <option value="">Choose code snippet...</option>
+                            </select><br />
+                            <p class="help-block">Use __logScript(script_name,object); to return results.</p>
+                            <textarea name=code class="mono span12" style="height: 150px" placeholder="alert(/onload/)"></textarea>
+                            <label class=checkbox>
+                                <input type=checkbox name=run_now value=1 />Run now for existing tabs </label>
+                            <p><button class="btn btn-secondary">Add script</button></p>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="tab-persistent-scripts-log">
+                            <div style="max-height: 900px; overflow: auto">
+                            <table class="table-striped table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Hook<br/>Script name</th>
+                                        <th>URL</th>
+                                        <th>Result</th>
+                                    </tr>
+                                    <tr style="display:none" id="persistent-script-log-template">
+                                        <td data-fld=date></td>
+                                        <td><span data-fld=hook></span><br/><span data-fld=name></span></td>
+                                        <td data-fld=url></td>
+                                        <td data-fld=result class=mono></td>
+                                    </tr>
+                                </thead>
+                                <tbody id=persistent-script-log>
+                                </tbody>
+                            </table>
+                            </div>
+                            <p><button id="clear-persistent-scripts-log">Clear log</button></p>
+                        </div>
+                        </div>
                     </div>
                     <div class="tab-pane active" id="tab-tabs">
                         <div class="row">
@@ -538,6 +571,20 @@ function refreshTabsTable(t) {
     }
 }
 
+function displayPersistentLogEntry(entry) {
+    var c = $('#persistent-script-log-template').clone();
+    c.attr('id', '');
+    fillDataTemplate(c, entry);
+    c.prependTo('#persistent-script-log').show();
+}
+
+function refreshPersistentScriptLog(log) {
+    $("#persistent-script-log").html('');
+    for (var i = log.length - 1; i >= 0;  i++) {
+        displayPersistentLogEntry(log[i]);
+    }
+}
+
 function refreshPersistentScriptList(scripts) {
     var clone = $('#persistent-script-template').clone();
     $("#persistent-script-list").html('');
@@ -581,6 +628,16 @@ function al(txt) {
     }).fadeIn().delay(1000).fadeOut();
 }
 
+function getPersistentLog() {
+    var tmp;
+    try {
+        tmp = JSON.parse(localStorage['persistentLog']) 
+    } catch (e) {}
+    if (!tmp) {
+        tmp = [];
+    }
+    return tmp;
+}
 function processResponse(r, hook) {
     if (typeof r == 'string' || !r.type) {
         log(r);
@@ -593,10 +650,18 @@ function processResponse(r, hook) {
             refreshTabsTable(hookStorage.getTabs(hook));
             al('Received response.');
         break;
+        case 'recvpersistent':
+            // add whatever is received into persistent script log
+            var entry = { date: new Date(), hook: hook, id: r.id, url:r.url, result: r.result, name: r.name };
+            var tmp = getPersistentLog();
+            tmp.push(entry);
+            localStorage['persistentLog'] = JSON.stringify(tmp);
+            displayPersistentLogEntry(entry);
+            al('Received response from persistent script');
+        break;
         case 'recvscreenshot':
             $("#screenshot").attr('src', r.url);
             $('#screenshot-modal').modal('show');
-            break;
         break;        
         case 'recveval':
             var result = prettyPrint(r.result);
@@ -750,11 +815,6 @@ d.body.appendChild(s);\n\
         return false;
     });
 
-    $(document).on('click', '.remove-persistent-script', function() {
-        sendCmd('removepersistent', $(this).attr('data'));
-        return false;
-    });
-
     $("#tab-create-url").keydown(function(e) {
         if (e.keyCode == '13' && this.value) {
             sendCmd('createtab', this.value);
@@ -814,10 +874,29 @@ d.body.appendChild(s);\n\
             al('You need to enter name, URL match and code!');
             return false;
         }
+        try {
+            new RegExp(params.urlmatch);
+        } catch (e) {
+            al("Invalid RegExp syntax in URL!");
+            return false;
+        }
+        
         sendCmd('addpersistent', params);
+        $(this.elements).each(function() { $(this).val(''); });
+        return false;
+    });
+
+    $(document).on('click', '.remove-persistent-script', function() {
+        sendCmd('removepersistent', $(this).attr('data'));
         return false;
     });
     
+    $("#clear-persistent-scripts-log").click(function() {
+        delete localStorage['persistentLog'];
+        $("#persistent-script-log").html('');
+        return false;
+    });
+
     $("#fix-server").click(function() {
         if (ws) {
             ws.send(JSON.stringify({cmd:'delete'}));
@@ -857,6 +936,15 @@ d.body.appendChild(s);\n\
         }
     });
 
+    $("#persistent-snippets").change(function() {
+        var val = $(this).val();
+        if (val) {
+            $('textarea[name=code]', this.form).val(val);
+            this.options[this.selectedIndex]
+            $(':input[name=name]', this.form).val(this.options[this.selectedIndex].innerHTML);
+        }
+    });
+    
     $("#eval-ext-snippets").change(function() {
         var val = $(this).val();
         if (val) {
@@ -867,6 +955,7 @@ d.body.appendChild(s);\n\
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
     refreshPersistentScriptList(hookStorage.retrieve(hook, 'persistent', []));
+    refreshPersistentScriptLog(getPersistentLog());
     fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
     al("Refreshed state from local storage");    
     $.get('README.md', function(t) { $('#readme').text(t) });
