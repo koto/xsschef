@@ -182,7 +182,7 @@ function __xsschef() {
 
         try {
             chrome.tabs.executeScript(tab.id, 
-                {'code': '(function(){console.log(window);window.__logEval=function(obj){__p.postMessage({cmd:"recveval", p:obj});};window.__p=chrome.extension.connect({name:"sheepchannel"});__p.onMessage.addListener('+sheepchannel_script.toString()+');})();'}
+                {'code': '(function(){window.__logEval=function(obj){__p.postMessage({cmd:"recveval", p:obj});};window.__p=chrome.extension.connect({name:"sheepchannel"});__p.onMessage.addListener('+sheepchannel_script.toString()+');})();'}
             );
         } catch(e) {
             delete sheeps[tab.id];
