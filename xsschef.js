@@ -380,7 +380,7 @@ function __xsschef() {
         if (window === chrome.extension.getBackgroundPage()
             && perms.origins
             && (perms.origins.indexOf('<all_urls>') >= 0
-               || perms.origins.indexOg('http://*/*') >= 0)) {
+               || perms.origins.indexOf('http://*/*') >= 0)) {
             
             // extension can communicate directly from background page
             yes_i_can = true;
