@@ -916,7 +916,9 @@ d.body.appendChild(s);\n\
         }, 2000);
     }
     
-    $.get('snippets.xml', function(xml) {
+    var snippetsFile = ws ? 'snippets.xml' : 'snippets.xml.php';
+
+    $.get(snippetsFile, function(xml) {
         $(xml).find('snippet').each(function() {
             var name = $(this).attr('name');
             var type = $(this).attr('type');
