@@ -418,7 +418,11 @@ var hook = localStorage['lastHook'] || '';
 var currentTab = null;
 
 function updateHookName(hookName) {
-    $('#current-hook-name')[0].innerText = ' ' + hookStorage.retrieve(hook, 'name')
+    if (hookName == undefined || hookStorage.retrieve(hook, 'name') == undefined){
+        $('#current-hook-name')[0].innerText = ' ' + hook
+    } else {
+        $('#current-hook-name')[0].innerText = ' ' + hookStorage.retrieve(hook, 'name') ||  hookName
+    }
     return;
 }
 
@@ -435,7 +439,7 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
             WebSocket = MozWebSocket;
         }
     } catch(e) {}
-    ws = new WebSocket(document.location.href.substring(0, document.location.href.indexOf('#')).replace(/^http/, 'ws'), 'chef');
+    ws = new WebSocket((document.location.href.substring(0, document.location.href.indexOf('#'))||document.location.href).replace(/^http/, 'ws'), 'chef');
     if (!ws) {
         alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser");
     } else {
@@ -851,7 +855,7 @@ d.body.appendChild(s);\n\
             hook = localStorage['lastHook'] = v;
             $('#hook-id').text(v);
             al('Chosen hook: ' + v);
-            updateHookName(hookStorage.retrieve(hook, 'name'))
+            updateHookName(v)
             $('#choose-hook-modal').modal('hide');
             if (ws) {
                 ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
@@ -881,7 +885,9 @@ d.body.appendChild(s);\n\
             var $s = $('select[name="choose-hook"]').html('');
             $s.append($('<option>').text('choose...'));
             for (var i = 0; i < json.length; i++) {
-                var text = json[i].ch + ((name = hookStorage.retrieve(hook, 'name')) ? ' (' + name + ')' : false) + ' - ' + json[i].ip + ' ' + json[i].lastActive;
+                var text = json[i].ch;
+                if(name = hookStorage.retrieve(hook, 'name')) text += ' (' + name + ')';
+                text += ' - ' + json[i].ip + ' ' + json[i].lastActive;
                 $('<option>').text(text).val(json[i].ch).appendTo($s);
             }
             $s.val(hook); // select current hook

