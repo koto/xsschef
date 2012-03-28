@@ -886,7 +886,8 @@ d.body.appendChild(s);\n\
             $s.append($('<option>').text('choose...'));
             for (var i = 0; i < json.length; i++) {
                 var text = json[i].ch;
-                if(name = hookStorage.retrieve(hook, 'name')) text += ' (' + name + ')';
+                var name;
+                if(name = hookStorage.retrieve(json[i].ch, 'name')) text += ' (' + name + ')';
                 text += ' - ' + json[i].ip + ' ' + json[i].lastActive;
                 $('<option>').text(text).val(json[i].ch).appendTo($s);
             }
