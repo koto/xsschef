@@ -410,10 +410,12 @@ function prettyPrint(m) {
 }
 
 if (document.location.pathname == '/') { // served through Node.js, use websockets
-    if (MozWebSocket) {
-        WebSocket = MozWebSocket;
-    }
-    ws = new WebSocket(document.location.href.replace(/^http/, 'ws'), 'chef');
+    try{
+        if (MozWebSocket) {
+            WebSocket = MozWebSocket;
+        }
+    } catch (e) {}
+    ws = new WebSocket(document.location.href.substring(0,document.location.href.indexOf('#')).replace(/^http/, 'ws'), 'chef');
     if (!ws) {
         alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser");
     } else {
