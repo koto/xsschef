@@ -255,7 +255,6 @@ function __xsschef() {
                         postToSheep(msg.id, {cmd: 'sendhtml'});
                 break;
                 case 'reportcookies':
-                $('mcurrent-hook')[0].innerText=hook;
                     chrome.tabs.get(msg.id, function(t) {
                         var cookstr = "No cookies permissions in extension";
                         chrome.cookies.getAll({
