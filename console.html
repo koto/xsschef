@@ -558,7 +558,7 @@ function fillDataTemplate(node, data) {
         $('[data-fld]', node).each(function() {
             var j = this.attributes['data-fld'].value;
             var text;
-            if (typeof data[j] == 'undefined') {
+            if (!data || typeof data[j] == 'undefined') {
                 text = '?';
             } else {
                 text = prettyPrint(data[j]);
