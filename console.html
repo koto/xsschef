@@ -453,6 +453,12 @@ if (indexedDB) {
 	
 	req.onsuccess = function(event) {
 		db = event.target.result;
+		if (db.setVersion && !db.objectStoreNames.contains('screenshots')) { // chrome
+			db.setVersion('1').onsuccess = function(e) {
+				req.init(db);
+			}
+			
+		}
 	}
 	
 	req.onerror = function(event) {
@@ -461,8 +467,12 @@ if (indexedDB) {
 	
 	req.onupgradeneeded = function(event) {
 		al('Upgrading DB...');
-		event.target.result.createObjectStore("screenshots", {keyPath: "id", autoIncrement:true});
+		req.init(event.target.result);
 		db = event.target.result;
+	}
+	
+	req.init = function(o) {
+		o.createObjectStore("screenshots", {keyPath: "id", autoIncrement:true});
 	}
 }
 
@@ -898,8 +908,8 @@ d.body.appendChild(s);\n\
     		al('Error, no screenshots store. Database not initialized?');
     		return false;
 		}
-		
-		var t = db.transaction(["screenshots"], IDBTransaction.READ_WRITE);
+		var mode = window.webkitIDBTransaction ? webkitIDBTransaction.READ_WRITE : IDBTransaction.READ_WRITE;
+		var t = db.transaction(["screenshots"], mode);
 		t.objectStore('screenshots')
 			.add({
 	    		'hook': hook,
@@ -912,10 +922,10 @@ d.body.appendChild(s);\n\
 		        $('#screenshot-modal').modal('hide');
 			};
 		t.oncomplete = function() {
-			console.log('complete');
+			//console.log('complete');
 		}
 		t.onerror = function() {
-			console.log('e');
+			//console.log('e');
 		}
 		
     });
