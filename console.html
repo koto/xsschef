@@ -59,7 +59,9 @@ overflow-y: auto;
 background-color: #0088CC !important;
 color: #FFFFFF !important;
 }
-#screenshots-saved-images {max-height: 400px; overflow-y: auto; border: 3px solid #000000;}
+
+.screenshot-saved-images {max-height: 100px; overflow-y: auto; margin: 0.5em;}
+
 .modal {
 display:none;
 }
@@ -92,7 +94,7 @@ display:none;
             <li><a href="#about-modal" data-toggle=modal>About</a></li>
             <li><a href="#readme-modal" data-toggle=modal>Readme</a></li>
             <li><a href="#hook-modal" data-toggle=modal>Hook code</a></li>
-            <li><a href="#saved-screenshots-modal" id=saved-screenshots-load  data-toggle=modal>Saved Screenshots</a></li>
+            <li><a href="#saved-screenshots-modal" id=saved-screenshots-load  data-toggle=modal>Saved screenshots</a></li>
         </ul>
             <a class="brand"  href="#">XSS ChEF - Chrome Extension Exploitation Framework</a>
         </div>
@@ -341,8 +343,8 @@ display:none;
   </div>
   <div class="modal-footer">
     <input type="textbox" id=screenshot-description class="row-fluid" placeholder="Give this screenshot a description">
-    <button type="button" id=screenshot-save class="btn btn-secondary">Save Screenshot</button>
-    <button type="button" id=screenshot-open class="btn btn-secondary">Open in Tab</button>
+    <button type="button" id=screenshot-save class="btn btn-secondary">Save Screenshot (experimental)</button>
+    <a href="#" target=_blank type="button" id=screenshot-open class="btn btn-secondary">Open in Tab</a>
   </div>
 </div>
 
@@ -419,10 +421,10 @@ display:none;
 <div class="modal screenshot-modal" id="saved-screenshots-modal">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>
-    <h3>Saved Screenshots</h3>
+    <h3>Saved screenshots <small>(experimental)</small></h3>
   </div>  
     <div class="modal-body">
-      <div id=saved-screenshots style="text-align:center">
+      <div id=saved-screenshots>
       </div>
   </div>
 </div>
@@ -439,11 +441,30 @@ var ws;
 var hook = localStorage['lastHook'] || '';
 var currentTab = null;
 
-var db = openDatabase('screenShots', '1.0', 'Screenshots', 500 * 1024 * 1024); // Open database, some really large estimated number in size (500mb)
+if (window.mozIndexedDB) {
+	indexedDB = window.mozIndexedDB;
+} else if (window.webkitIndexedDB) {
+	indexedDB = window.webkitIndexedDB;
+}
 
-db.transaction(function (tx) {
-  tx.executeSql('CREATE TABLE IF NOT EXISTS list (id INTEGER PRIMARY KEY ASC, hook TEXT, date INTEGER, description TEXT, image TEXT)'); // Maybe image should be converted to blob later, with binary data?
-});
+if (indexedDB) {
+	var db = null;
+	var req = indexedDB.open("xss-chef", 1);
+	
+	req.onsuccess = function(event) {
+		db = event.target.result;
+	}
+	
+	req.onerror = function(event) {
+		al('Error opening indexed DB');
+	}
+	
+	req.onupgradeneeded = function(event) {
+		al('Upgrading DB...');
+		event.target.result.createObjectStore("screenshots", {keyPath: "id", autoIncrement:true});
+		db = event.target.result;
+	}
+}
 
 function updateHookName(hookName) {
     if (hookName == undefined || hookStorage.retrieve(hook, 'name') == undefined){
@@ -719,6 +740,7 @@ function processResponse(r, hook) {
         break;
         case 'recvscreenshot':
             $("#screenshot").attr('src', r.url);
+            $("#screenshot-open").attr('href', r.url);
             $('#screenshot-modal').modal('show');
         break;        
         case 'recveval':
@@ -868,40 +890,64 @@ d.body.appendChild(s);\n\
     });
 
     $('#screenshot-save').click(function() {
-        db.transaction(function(tx){
-            tx.executeSql('INSERT INTO list (hook,date,description,image) VALUES ("'+hook+'",strftime("%s"),"'+$('#screenshot-description').attr('value').replace('"','&quot;')+'","'+$('#screenshot').attr('src')+'");')
-        })
-        al('Screenshot saved!')
-        log('Screenshot saved!')
-        $('#screenshot-modal').modal('hide');
-    });
-
-    $('#screenshot-open').click(function() {
-        a=window.open($('#screenshot').attr('src'))
+    	if (!db) {
+    		al('No indexed DB support in your browser');
+    		return false;
+		}
+    	if (!db.objectStoreNames.contains('screenshots')) {
+    		al('Error, no screenshots store. Database not initialized?');
+    		return false;
+		}
+		
+		var t = db.transaction(["screenshots"], IDBTransaction.READ_WRITE);
+		t.objectStore('screenshots')
+			.add({
+	    		'hook': hook,
+	    		'date': new Date(),
+				'description': $('#screenshot-description').attr('value'),
+				'image': $('#screenshot').attr('src')   	
+			}).onsuccess = function() {
+		        al('Screenshot saved!')
+		        log('Screenshot saved!')
+		        $('#screenshot-modal').modal('hide');
+			};
+		t.oncomplete = function() {
+			console.log('complete');
+		}
+		t.onerror = function() {
+			console.log('e');
+		}
+		
     });
 
     $('#saved-screenshots-load').click(function() {
-        shot=[]
-        $('#saved-screenshots').html('')
-        db.transaction(function (x) {
-        x.executeSql('select * from list;', [],function(tx,r){
-            var len = r.rows.length;
-            for (i = 0; i < len; i++) {
-                shot[i]=r.rows.item(i);
-                d=document;
-                span=d.createElement('span');
-                img=d.createElement('img');
-                anchor=d.createElement('a');
-                img.setAttribute('id','screenshots-saved-images');
-                img.setAttribute('width','400px');
-                img.setAttribute('heigt','400px');
-                img.src=shot[i]['image'];
-                img.setAttribute('onclick','window.open("'+shot[i]['image']+'")');
-                span.appendChild(img);
-                $('#saved-screenshots').append(span)
-            }
-         })
-       });
+    	if (!db) {
+    		al('No indexed DB support in your browser');
+    		return false;
+		}
+    	if (!db.objectStoreNames.contains('screenshots')) {
+    		al('Error, no screenshots store. Database not initialized?');
+    		return false;
+		}
+		
+        $('#saved-screenshots').html('');
+        var req = db.transaction(["screenshots"]).objectStore("screenshots").openCursor();
+        
+        req.onsuccess = function(event) {
+        	var c = event.target.result;
+        	if (!c) { // end of set
+        		return;
+			}
+            var $a = $('<a target=_blank>').attr('href', c.value.image);
+              
+			$('<img class="screenshot-saved-images">')
+				.attr('src', c.value.image)
+				.attr('title', c.value.description)
+				.appendTo($('#saved-screenshots'))				
+				.wrap($a);
+				
+			c.continue();
+		};
     });
 
     $(document).on('click', '#links a', function() {
