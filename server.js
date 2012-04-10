@@ -49,6 +49,53 @@ var prepareHook = function(req) {
     return modified;
     
 }
+
+var readSnippets = function() {
+    var snippets = [];
+    var base = './snippets/';
+
+    var subdirs = fs.readdirSync(base);
+    
+    subdirs = subdirs.filter(function(file) { 
+        return fs.statSync(base + file).isDirectory();
+    });
+    
+    subdirs.forEach(function(subdir) {
+        var files = fs.readdirSync(base + subdir);
+        files
+            .filter(function(file) { return file.substr(-3) == '.js'; })
+            .forEach(function(file) { 
+                snippets.push({
+                    type: subdir, 
+                    name: file.substr(0,file.length-3),
+                    contents: fs.readFileSync(base + subdir + '/' + file, 'utf-8')
+                });
+            });
+    });
+    
+    return snippets;
+};
+
+function htmlEscape(text) {
+   return text.replace(/&/g,'&amp;').
+     replace(/</g,'&lt;').
+     replace(/"/g,'&quot;').
+     replace(/'/g,'&#039;');
+}
+
+var getSnippetsXML = function() {
+    var snippets = readSnippets();
+    
+    var xml = '<?xml version="1.0" encoding="utf-8"?>\n<snippets>\n';
+    snippets.forEach(function(snippet) {
+        xml += '<snippet type="' + htmlEscape(snippet.type)
+               + '" name="' + htmlEscape(snippet.name) + '">'
+               + htmlEscape(snippet.contents)
+               + "</snippet>\n";
+    })
+    return xml + "</snippets>";
+}
+
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
     if (request.url == '/hook.php' || request.url == '/hook') { // hook
@@ -57,7 +104,7 @@ var server = http.createServer(function(request, response) {
         return;
     }
     
-    if (request.url == '/list') { // console
+    if (request.url == '/list') { // list hooks - request from console
         var hooks = [];
         connections.forEach(function(c) {
             if (c.isHook) 
@@ -65,6 +112,12 @@ var server = http.createServer(function(request, response) {
         });
         response.writeHead(200, {'content-type' : 'application/json'});
         response.end(JSON.stringify(hooks));
+        return;
+    }
+
+    if (request.url == '/snippets.xml' || request.url == '/snippets.xml.php') { // list snippets - request from console
+        response.writeHead(200, {'content-type' : 'text/xml'});
+        response.end(getSnippetsXML());
         return;
     }
     
