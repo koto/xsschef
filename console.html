@@ -410,7 +410,7 @@ function prettyPrint(m) {
 }
 
 if (document.location.pathname == '/') { // served through Node.js, use websockets
-    if (MozWebSocket) {
+    if (typeof MozWebSocket !== 'undefined') {
         WebSocket = MozWebSocket;
     }
     ws = new WebSocket(document.location.href.replace(/^http/, 'ws'), 'chef');
@@ -588,11 +588,13 @@ function refreshPersistentScriptLog(log) {
 function refreshPersistentScriptList(scripts) {
     var clone = $('#persistent-script-template').clone();
     $("#persistent-script-list").html('');
-    for (var i = 0; i < scripts.length;  i++) {
-        var c = $(clone).clone();
-        c.attr('id', '');
-        fillDataTemplate(c,scripts[i]);
-        c.appendTo('#persistent-script-list').show();
+    if (scripts) {
+	    for (var i = 0; i < scripts.length;  i++) {
+	        var c = $(clone).clone();
+	        c.attr('id', '');
+	        fillDataTemplate(c,scripts[i]);
+	        c.appendTo('#persistent-script-list').show();
+	    }
     }
     clone.appendTo('#persistent-script-list');
 }
