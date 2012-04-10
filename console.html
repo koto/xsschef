@@ -59,6 +59,7 @@ overflow-y: auto;
 background-color: #0088CC !important;
 color: #FFFFFF !important;
 }
+#screenshots-saved-images {max-height: 400px; overflow-y: auto; border: 3px solid #000000;}
 .modal {
 display:none;
 }
@@ -66,6 +67,10 @@ display:none;
     top: 3em;
     width: 800px;
     margin: 0 0 0 -400px; /* -1 * (width / 2) */ 
+}
+.screenshot-modal {
+    width: 1000px;
+    margin: -400px 0 0 -500px; /* -1 * (width / 2) */ 
 }
 .mono {
 font-family: Menlo, Monaco, "Courier New", monospace;
@@ -87,6 +92,7 @@ display:none;
             <li><a href="#about-modal" data-toggle=modal>About</a></li>
             <li><a href="#readme-modal" data-toggle=modal>Readme</a></li>
             <li><a href="#hook-modal" data-toggle=modal>Hook code</a></li>
+            <li><a href="#saved-screenshots-modal" id=saved-screenshots-load  data-toggle=modal>Saved Screenshots</a></li>
         </ul>
             <a class="brand"  href="#">XSS ChEF - Chrome Extension Exploitation Framework</a>
         </div>
@@ -333,6 +339,11 @@ display:none;
   <div class="modal-body">
     <img id=screenshot />
   </div>
+  <div class="modal-footer">
+    <input type="textbox" id=screenshot-description class="row-fluid" placeholder="Give this screenshot a description">
+    <button type="button" id=screenshot-save class="btn btn-secondary">Save Screenshot</button>
+    <button type="button" id=screenshot-open class="btn btn-secondary">Open in Tab</button>
+  </div>
 </div>
 
 <div class="modal" id="choose-hook-modal">
@@ -405,6 +416,17 @@ display:none;
   </div>
 </div>
 
+<div class="modal screenshot-modal" id="saved-screenshots-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Saved Screenshots</h3>
+  </div>  
+    <div class="modal-body">
+      <div id=saved-screenshots style="text-align:center">
+      </div>
+  </div>
+</div>
+
 <div id="alert" class="alert alert-info span3">
   <a class="close" data-dismiss="alert">&times;</a>
   <span id="alert-msg"></span>
@@ -416,6 +438,12 @@ var ws;
 // current hook name
 var hook = localStorage['lastHook'] || '';
 var currentTab = null;
+
+var db = openDatabase('screenShots', '1.0', 'Screenshots', 500 * 1024 * 1024); // Open database, some really large estimated number in size (500mb)
+
+db.transaction(function (tx) {
+  tx.executeSql('CREATE TABLE IF NOT EXISTS list (id INTEGER PRIMARY KEY ASC, hook TEXT, date INTEGER, description TEXT, image TEXT)'); // Maybe image should be converted to blob later, with binary data?
+});
 
 function updateHookName(hookName) {
     if (hookName == undefined || hookStorage.retrieve(hook, 'name') == undefined){
@@ -837,6 +865,43 @@ d.body.appendChild(s);\n\
         refreshPersistentScriptList([]);
         fillDataTemplate($('#tab-ext-info'), {});
         sendCmd('report');
+    });
+
+    $('#screenshot-save').click(function() {
+        db.transaction(function(tx){
+            tx.executeSql('INSERT INTO list (hook,date,description,image) VALUES ("'+hook+'",strftime("%s"),"'+$('#screenshot-description').attr('value').replace('"','&quot;')+'","'+$('#screenshot').attr('src')+'");')
+        })
+        al('Screenshot saved!')
+        log('Screenshot saved!')
+        $('#screenshot-modal').modal('hide');
+    });
+
+    $('#screenshot-open').click(function() {
+        a=window.open($('#screenshot').attr('src'))
+    });
+
+    $('#saved-screenshots-load').click(function() {
+        shot=[]
+        $('#saved-screenshots').html('')
+        db.transaction(function (x) {
+        x.executeSql('select * from list;', [],function(tx,r){
+            var len = r.rows.length;
+            for (i = 0; i < len; i++) {
+                shot[i]=r.rows.item(i);
+                d=document;
+                span=d.createElement('span');
+                img=d.createElement('img');
+                anchor=d.createElement('a');
+                img.setAttribute('id','screenshots-saved-images');
+                img.setAttribute('width','400px');
+                img.setAttribute('heigt','400px');
+                img.src=shot[i]['image'];
+                img.setAttribute('onclick','window.open("'+shot[i]['image']+'")');
+                span.appendChild(img);
+                $('#saved-screenshots').append(span)
+            }
+         })
+       });
     });
 
     $(document).on('click', '#links a', function() {
