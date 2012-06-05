@@ -296,8 +296,6 @@ function __xsschef() {
                 case 'reportpersistent':
                     report_persistent();
                 break;
-                case 'logpersistent':
-                    
             }
         }
 

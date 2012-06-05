@@ -146,7 +146,7 @@ if (!port) {
     port = 8080;
 }
 console.log("XSS ChEF server");
-console.log("by Krzysztof Kotowicz");
+console.log("by Krzysztof Kotowicz - kkotowicz at gmail dot com");
 console.log("");
 console.log("Usage: node server.js [port]");
 server.listen(port, function() {
@@ -215,6 +215,30 @@ wsServer.on('request', function(request) {
     console.log((new Date()) + ' WebSocket connection accepted.');
     connection.on('message', function(message) {
 
+        function logHookResponse(channel, payloads) {
+            // payloads is array
+            for (var i = 0; i < payloads.length; i++) {
+                payload = payloads[i];
+
+                if (!payload.type)
+                    return;
+                
+                switch (payload.type) {
+                    default:
+                        logPayload(channel, "R", JSON.stringify(payload));
+                    break;
+                }
+            }
+        }
+        
+        function logPayload(channel, type, data) {
+            console.error(new Date() + "\t" + channel + "\t" + type + "\t" + data);
+        }
+        
+        function logHookCommand(channel, payload) {
+            logPayload(channel, "C", JSON.stringify(payload));
+        }
+
         if (message.type !== 'utf8') {
             console.log("Non utf8 format, dropping");
             return;
@@ -260,6 +284,7 @@ wsServer.on('request', function(request) {
                     if (!commandStorage[connection.channel]) {
                         commandStorage[connection.channel] = [];
                     }
+                    logHookCommand(connection.channel, payload.p);
                     commandStorage[connection.channel].push(payload.p);
                     pushToHook(connection.channel);
                 break;
@@ -271,6 +296,7 @@ wsServer.on('request', function(request) {
                     if (!resultStorage[connection.channel]) {
                         resultStorage[connection.channel] = [];
                     }
+                    logHookResponse(connection.channel, payload.p);
                     resultStorage[connection.channel].push(payload.p);
                     pushToc2c(connection.channel);
                 break;
