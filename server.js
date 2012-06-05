@@ -149,6 +149,8 @@ console.log("XSS ChEF server");
 console.log("by Krzysztof Kotowicz - kkotowicz at gmail dot com");
 console.log("");
 console.log("Usage: node server.js [port]");
+console.log("Communication is logged to stderr, use node server.js [port] 2>log.txt");
+
 server.listen(port, function() {
     console.log((new Date()) + ' ChEF server is listening on port ' + port);
     console.log((new Date()) + ' Console URL: http://127.0.0.1:' + port + '/');

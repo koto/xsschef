@@ -439,7 +439,9 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
             WebSocket = MozWebSocket;
         }
     } catch(e) {}
-    ws = new WebSocket((document.location.href.substring(0, document.location.href.indexOf('#'))||document.location.href).replace(/^http/, 'ws'), 'chef');
+    function ReconnectingWebSocket(a,prot){function f(g){c=new WebSocket(a,prot);var h=c;var i=setTimeout(function(){e=true;h.close();e=false},b.timeoutInterval);c.onopen=function(c){clearTimeout(i);b.readyState=WebSocket.OPEN;g=false;b.onopen(c)};c.onclose=function(h){clearTimeout(i);c=null;if(d){b.readyState=WebSocket.CLOSED;b.onclose(h)}else{b.readyState=WebSocket.CONNECTING;if(!g&&!e){b.onclose(h)}setTimeout(function(){f(true)},b.reconnectInterval)}};c.onmessage=function(c){b.onmessage(c)};c.onerror=function(c){b.onerror(c)}}this.debug=false;this.reconnectInterval=1e3;this.timeoutInterval=2e3;var b=this;var c;var d=false;var e=false;this.url=a;this.prot=prot;this.readyState=WebSocket.CONNECTING;this.URL=a;this.onopen=function(a){};this.onclose=function(a){};this.onmessage=function(a){};this.onerror=function(a){};f(a);this.send=function(d){if(c){return c.send(d)}else{throw"INVALID_STATE_ERR : Pausing to reconnect websocket"}};this.close=function(){if(c){d=true;c.close()}};this.refresh=function(){if(c){c.close()}}};
+    
+    ws = new ReconnectingWebSocket((document.location.href.substring(0, document.location.href.indexOf('#'))||document.location.href).replace(/^http/, 'ws'), 'chef');
     if (!ws) {
         alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser");
     } else {
@@ -452,6 +454,7 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
             } catch (e) {}
         }
         ws.onopen = function() {
+            log('connection to server opened');
             ws.send(JSON.stringify({cmd:'hello-c2c'}));
             if (hook) {
                 ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
@@ -460,7 +463,9 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
 
         }
         ws.onclose = function() {
-            alert("Connection to server dropped :(");
+            var s = "Connection to server dropped, will try reconnecting :(";
+            alert(s);
+            log(s);
         }
     }
 } else { // served through Apache, use XHR php scripts
