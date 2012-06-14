@@ -59,6 +59,9 @@ overflow-y: auto;
 background-color: #0088CC !important;
 color: #FFFFFF !important;
 }
+
+.screenshot-saved-images {max-height: 100px; overflow-y: auto; margin: 0.5em;}
+
 .modal {
 display:none;
 }
@@ -66,6 +69,10 @@ display:none;
     top: 3em;
     width: 800px;
     margin: 0 0 0 -400px; /* -1 * (width / 2) */ 
+}
+.screenshot-modal {
+    width: 1000px;
+    margin: -400px 0 0 -500px; /* -1 * (width / 2) */ 
 }
 .mono {
 font-family: Menlo, Monaco, "Courier New", monospace;
@@ -87,6 +94,7 @@ display:none;
             <li><a href="#about-modal" data-toggle=modal>About</a></li>
             <li><a href="#readme-modal" data-toggle=modal>Readme</a></li>
             <li><a href="#hook-modal" data-toggle=modal>Hook code</a></li>
+            <li><a href="#saved-screenshots-modal" id=saved-screenshots-load  data-toggle=modal>Saved screenshots</a></li>
         </ul>
             <a class="brand"  href="#">XSS ChEF - Chrome Extension Exploitation Framework</a>
         </div>
@@ -333,6 +341,11 @@ display:none;
   <div class="modal-body">
     <img id=screenshot />
   </div>
+  <div class="modal-footer">
+    <input type="textbox" id=screenshot-description class="row-fluid" placeholder="Give this screenshot a description">
+    <button type="button" id=screenshot-save class="btn btn-secondary">Save Screenshot (experimental)</button>
+    <a href="#" target=_blank type="button" id=screenshot-open class="btn btn-secondary">Open in Tab</a>
+  </div>
 </div>
 
 <div class="modal" id="choose-hook-modal">
@@ -405,6 +418,17 @@ display:none;
   </div>
 </div>
 
+<div class="modal screenshot-modal" id="saved-screenshots-modal">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Saved screenshots <small>(experimental)</small></h3>
+  </div>  
+    <div class="modal-body">
+      <div id=saved-screenshots>
+      </div>
+  </div>
+</div>
+
 <div id="alert" class="alert alert-info span3">
   <a class="close" data-dismiss="alert">&times;</a>
   <span id="alert-msg"></span>
@@ -416,6 +440,41 @@ var ws;
 // current hook name
 var hook = localStorage['lastHook'] || '';
 var currentTab = null;
+
+if (window.mozIndexedDB) {
+	indexedDB = window.mozIndexedDB;
+} else if (window.webkitIndexedDB) {
+	indexedDB = window.webkitIndexedDB;
+}
+
+if (indexedDB) {
+	var db = null;
+	var req = indexedDB.open("xss-chef", 1);
+	
+	req.onsuccess = function(event) {
+		db = event.target.result;
+		if (db.setVersion && !db.objectStoreNames.contains('screenshots')) { // chrome
+			db.setVersion('1').onsuccess = function(e) {
+				req.init(db);
+			}
+			
+		}
+	}
+	
+	req.onerror = function(event) {
+		al('Error opening indexed DB');
+	}
+	
+	req.onupgradeneeded = function(event) {
+		al('Upgrading DB...');
+		req.init(event.target.result);
+		db = event.target.result;
+	}
+	
+	req.init = function(o) {
+		o.createObjectStore("screenshots", {keyPath: "id", autoIncrement:true});
+	}
+}
 
 function updateHookName(hookName) {
     if (hookName == undefined || hookStorage.retrieve(hook, 'name') == undefined){
@@ -435,7 +494,7 @@ function prettyPrint(m) {
 
 if (document.location.pathname == '/') { // served through Node.js, use websockets
     try {
-        if (MozWebSocket) {
+    	if (typeof MozWebSocket !== 'undefined') {
             WebSocket = MozWebSocket;
         }
     } catch(e) {}
@@ -563,7 +622,7 @@ function fillDataTemplate(node, data) {
         $('[data-fld]', node).each(function() {
             var j = this.attributes['data-fld'].value;
             var text;
-            if (typeof data[j] == 'undefined') {
+            if (!data || typeof data[j] == 'undefined') {
                 text = '?';
             } else {
                 text = prettyPrint(data[j]);
@@ -620,11 +679,13 @@ function refreshPersistentScriptLog(log) {
 function refreshPersistentScriptList(scripts) {
     var clone = $('#persistent-script-template').clone();
     $("#persistent-script-list").html('');
-    for (var i = 0; i < scripts.length;  i++) {
-        var c = $(clone).clone();
-        c.attr('id', '');
-        fillDataTemplate(c,scripts[i]);
-        c.appendTo('#persistent-script-list').show();
+    if (scripts) {
+	    for (var i = 0; i < scripts.length;  i++) {
+	        var c = $(clone).clone();
+	        c.attr('id', '');
+	        fillDataTemplate(c,scripts[i]);
+	        c.appendTo('#persistent-script-list').show();
+	    }
     }
     clone.appendTo('#persistent-script-list');
 }
@@ -694,6 +755,7 @@ function processResponse(r, hook) {
         break;
         case 'recvscreenshot':
             $("#screenshot").attr('src', r.url);
+            $("#screenshot-open").attr('href', r.url);
             $('#screenshot-modal').modal('show');
         break;        
         case 'recveval':
@@ -840,6 +902,67 @@ d.body.appendChild(s);\n\
         refreshPersistentScriptList([]);
         fillDataTemplate($('#tab-ext-info'), {});
         sendCmd('report');
+    });
+
+    $('#screenshot-save').click(function() {
+    	if (!db) {
+    		al('No indexed DB support in your browser');
+    		return false;
+		}
+    	if (!db.objectStoreNames.contains('screenshots')) {
+    		al('Error, no screenshots store. Database not initialized?');
+    		return false;
+		}
+		var mode = window.webkitIDBTransaction ? webkitIDBTransaction.READ_WRITE : IDBTransaction.READ_WRITE;
+		var t = db.transaction(["screenshots"], mode);
+		t.objectStore('screenshots')
+			.add({
+	    		'hook': hook,
+	    		'date': new Date(),
+				'description': $('#screenshot-description').attr('value'),
+				'image': $('#screenshot').attr('src')   	
+			}).onsuccess = function() {
+		        al('Screenshot saved!')
+		        log('Screenshot saved!')
+		        $('#screenshot-modal').modal('hide');
+			};
+		t.oncomplete = function() {
+			//console.log('complete');
+		}
+		t.onerror = function() {
+			//console.log('e');
+		}
+		
+    });
+
+    $('#saved-screenshots-load').click(function() {
+    	if (!db) {
+    		al('No indexed DB support in your browser');
+    		return false;
+		}
+    	if (!db.objectStoreNames.contains('screenshots')) {
+    		al('Error, no screenshots store. Database not initialized?');
+    		return false;
+		}
+		
+        $('#saved-screenshots').html('');
+        var req = db.transaction(["screenshots"]).objectStore("screenshots").openCursor();
+        
+        req.onsuccess = function(event) {
+        	var c = event.target.result;
+        	if (!c) { // end of set
+        		return;
+			}
+            var $a = $('<a target=_blank>').attr('href', c.value.image);
+              
+			$('<img class="screenshot-saved-images">')
+				.attr('src', c.value.image)
+				.attr('title', c.value.description)
+				.appendTo($('#saved-screenshots'))				
+				.wrap($a);
+				
+			c.continue();
+		};
     });
 
     $(document).on('click', '#links a', function() {
