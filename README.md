@@ -50,7 +50,7 @@ Installation:
     $ node server.js [chosen-tcp-port]
     
 ### Launch CHeF console (on attacker's machine)
-  - PHP: http://127.0.0.1/console.php
+  - PHP: http://127.0.0.1/console.html
   - node.js: http://127.0.0.1:8080/
 
 ### Hook Chrome extension (on victim's)

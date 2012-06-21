@@ -447,6 +447,30 @@ if (window.mozIndexedDB) {
 	indexedDB = window.webkitIndexedDB;
 }
 
+function getParam(name) {
+
+    function ReadCookie(name) {
+      name += '=';
+      var parts = document.cookie.split(/;\s*/);
+      for (var i = 0; i < parts.length; i++)
+      {
+        var part = parts[i];
+        if (part.indexOf(name) == 0)
+          return part.substring(name.length)
+      }
+      return undefined;
+    }
+
+    var config = ReadCookie('console-cfg');
+    if (!config)
+        return false;
+    try {
+        config = JSON.parse(unescape(config));
+        return config[name];
+    } catch(e) {}
+    return false;
+}
+
 if (indexedDB) {
 	var db = null;
 	var req = indexedDB.open("xss-chef", 1);
@@ -492,7 +516,7 @@ function prettyPrint(m) {
     return JSON.stringify(m, undefined, 3);
 }
 
-if (document.location.pathname == '/') { // served through Node.js, use websockets
+if (getParam('server_type') == 'ws') { // served through Node.js, use websockets
     try {
     	if (typeof MozWebSocket !== 'undefined') {
             WebSocket = MozWebSocket;
@@ -500,9 +524,17 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
     } catch(e) {}
     function ReconnectingWebSocket(a,prot){function f(g){c=new WebSocket(a,prot);var h=c;var i=setTimeout(function(){e=true;h.close();e=false},b.timeoutInterval);c.onopen=function(c){clearTimeout(i);b.readyState=WebSocket.OPEN;g=false;b.onopen(c)};c.onclose=function(h){clearTimeout(i);c=null;if(d){b.readyState=WebSocket.CLOSED;b.onclose(h)}else{b.readyState=WebSocket.CONNECTING;if(!g&&!e){b.onclose(h)}setTimeout(function(){f(true)},b.reconnectInterval)}};c.onmessage=function(c){b.onmessage(c)};c.onerror=function(c){b.onerror(c)}}this.debug=false;this.reconnectInterval=1e3;this.timeoutInterval=2e3;var b=this;var c;var d=false;var e=false;this.url=a;this.prot=prot;this.readyState=WebSocket.CONNECTING;this.URL=a;this.onopen=function(a){};this.onclose=function(a){};this.onmessage=function(a){};this.onerror=function(a){};f(a);this.send=function(d){if(c){return c.send(d)}else{throw"INVALID_STATE_ERR : Pausing to reconnect websocket"}};this.close=function(){if(c){d=true;c.close()}};this.refresh=function(){if(c){c.close()}}};
     
-    ws = new ReconnectingWebSocket((document.location.href.substring(0, document.location.href.indexOf('#'))||document.location.href).replace(/^http/, 'ws'), 'chef');
+    ws = new ReconnectingWebSocket(
+        // get absolute url of current doc
+        (document.location.href.substring(0, document.location.href.indexOf('#'))
+         ||document.location.href)
+            .replace(/^http/, 'ws') // change protocol
+            .replace(/(wss?\/\/[^/]+)(:\d+)?\//, '$1:' + getParam('ws_port')+ '/') // append port
+        , 'chef');
+
     if (!ws) {
-        alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser");
+        alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser.");
+        document.cookie = '';
     } else {
         ws.onmessage = function(ev) {
             try {
@@ -527,6 +559,8 @@ if (document.location.pathname == '/') { // served through Node.js, use websocke
             log(s);
         }
     }
+    var currentListCallback = al;
+    
 } else { // served through Apache, use XHR php scripts
     ws = false;
 }
@@ -615,6 +649,8 @@ var hookStorage = {
         } catch (e) {
             return def;
         }
+        if (e == undefined)
+            return def;
     }
 };
 
@@ -791,18 +827,23 @@ function processResponse(r, hook) {
         case 'server_msg':
             al(r.result);
         break;
+        case 'list':
+            al(r);
+            currentListCallback(r.result);
+        break;
     }
 }
 
 $(function() {
 
+/*
     if (ws) {
         var hook_url = document.location.href.replace(/\/$/, '/hook');
         var echo_js_url = document.location.href.replace(/\/$/, '/echo');
-    } else {    
+    } else {    */
         var hook_url = document.location.href.replace('/console.html', '/hook.php');
         var echo_js_url = document.location.href.replace('/console.html', '/echo.php');
-    }
+   /* }*/
 
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });
 
@@ -996,9 +1037,9 @@ d.body.appendChild(s);\n\
     $('#save-hook-name').click(function() {
         var v;
         if (v = ($('input[name="current-hook-name"]').val() || hook)) {
-            hookStorage.store(hook, 'name', v)
-            log('Chosen renamed: ' + hook + ' = ' + v);
-            updateHookName(v)
+            hookStorage.store(hook, 'name', v);
+            log('Chosen hook renamed: ' + hook + ' = ' + v);
+            updateHookName(v);
             $('#current-hook-modal').modal('hide');
         }
         return false;
@@ -1023,18 +1064,20 @@ d.body.appendChild(s);\n\
             $('#choose-hook-modal').modal('show');
         };
 
-    if (ws) {
-        $.getJSON('/list', displayHookChoice);
-    } else {
-        $.getJSON('server.php', displayHookChoice);
-    }
-
-    return false;
+        if (ws) {
+            currentListCallback = displayHookChoice;
+            ws.send(JSON.stringify({cmd:"list"}));
+            //$.getJSON('/list', displayHookChoice);
+        } else {
+            $.getJSON('server.php', displayHookChoice);
+        }
+    
+        return false;
     });
 
     $('#current-hook').click(function() {
         var changeHookName = function(json) {
-                if (!json.length) {
+                if (!json.length || !hook) {
                     al("Not connected to a Hook...");
                     return;
                 }
@@ -1045,7 +1088,8 @@ d.body.appendChild(s);\n\
             };
 
         if (ws) {
-            $.getJSON('/list', changeHookName);
+            currentListCallback = changeHookName;
+            ws.send(JSON.stringify({cmd:"list"}));
         } else {
             $.getJSON('server.php', changeHookName);
         }
@@ -1111,7 +1155,7 @@ d.body.appendChild(s);\n\
         }, 2000);
     }
 
-    var snippetsFile = ws ? 'snippets.xml' : 'snippets.xml.php';
+    var snippetsFile = 'snippets.xml.php';
 
     $.get(snippetsFile, function(xml) {
         $(xml).find('snippet').each(function() {
