@@ -447,28 +447,27 @@ if (window.mozIndexedDB) {
 	indexedDB = window.webkitIndexedDB;
 }
 
+function getQueryStringParams() {
+       var query = document.location.search.slice(1);
+       var Params = {};
+       if (!query) { return Params; } // return empty object
+       var Pairs = query.split(/[;&]/);
+       for (var i = 0; i < Pairs.length; i++) {
+          var KeyVal = Pairs[i].split('=');
+          if (!KeyVal || KeyVal.length != 2) {continue;}
+          var key = unescape(KeyVal[0]);
+          var val = unescape(KeyVal[1]);
+          val = val.replace(/\+/g, ' ');
+          Params[key] = val;
+       }
+       return Params;
+}
+
 function getParam(name) {
-
-    function ReadCookie(name) {
-      name += '=';
-      var parts = document.cookie.split(/;\s*/);
-      for (var i = 0; i < parts.length; i++)
-      {
-        var part = parts[i];
-        if (part.indexOf(name) == 0)
-          return part.substring(name.length)
-      }
-      return undefined;
-    }
-
-    var config = ReadCookie('console-cfg');
-    if (!config)
-        return false;
     try {
-        config = JSON.parse(unescape(config));
-        return config[name];
-    } catch(e) {}
-    return false;
+        // try to read from URL first
+        return getQueryStringParams()[name] 
+    } catch (e) {}
 }
 
 if (indexedDB) {
@@ -529,12 +528,13 @@ if (getParam('server_type') == 'ws') { // served through Node.js, use websockets
         (document.location.href.substring(0, document.location.href.indexOf('#'))
          ||document.location.href)
             .replace(/^http/, 'ws') // change protocol
+            .replace(/\?.*/, '') // remove query string
+            .replace(/console\.html/, '') // remove query string
             .replace(/(wss?\/\/[^/]+)(:\d+)?\//, '$1:' + getParam('ws_port')+ '/') // append port
         , 'chef');
 
     if (!ws) {
         alert("Trouble connecting through WebSocket, use PHP/Apache version or other browser.");
-        document.cookie = '';
     } else {
         ws.onmessage = function(ev) {
             try {
@@ -549,9 +549,9 @@ if (getParam('server_type') == 'ws') { // served through Node.js, use websockets
             ws.send(JSON.stringify({cmd:'hello-c2c'}));
             if (hook) {
                 ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
-                if (localStorage['hooks']) { 
+                try {
                     updateHookName(JSON.parse(localStorage['hooks'])[hook]['name'] || hook); // Bleh, hookStorage is defined below... lame! Maybe functions should be moved into their own block?
-                }
+                } catch (e) {}
             }
 
         }
@@ -840,8 +840,8 @@ $(function() {
         var hook_url = document.location.href.replace(/\/$/, '/hook');
         var echo_js_url = document.location.href.replace(/\/$/, '/echo');
     } else {    */
-        var hook_url = document.location.href.replace('/console.html', '/hook.php');
-        var echo_js_url = document.location.href.replace('/console.html', '/echo.php');
+        var hook_url = document.location.href.replace(/\/console\.html(\?.*)?/, '/hook.php');
+        var echo_js_url = document.location.href.replace(/\/console.html(\?.*)?/, '/echo.php');
    /* }*/
 
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });

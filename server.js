@@ -129,8 +129,10 @@ var server = http.createServer(function(request, response) {
     }
     
     if (request.url == '/' || request.url == '/console.html') {
-        response.setHeader('Set-Cookie', 'console-cfg='+escape(JSON.stringify({server_type:'ws', 'ws_port':port})));
-        request.url = '/console.html'; // quietly serve console.html (no redirect)
+    	response.statusCode = 302;
+        response.setHeader('Location', '/console.html?server_type=ws&ws_port=' + port);
+        response.end();
+        return;
     }
     
     fileserver.serve(request, response);
