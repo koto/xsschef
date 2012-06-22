@@ -218,6 +218,7 @@ wsServer.on('request', function(request) {
     connection.on('message', function(message) {
 
         function logHookResponse(channel, payloads) {
+            var payload;
             // payloads is array
             for (var i = 0; i < payloads.length; i++) {
                 payload = payloads[i];
