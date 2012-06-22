@@ -549,7 +549,9 @@ if (getParam('server_type') == 'ws') { // served through Node.js, use websockets
             ws.send(JSON.stringify({cmd:'hello-c2c'}));
             if (hook) {
                 ws.send(JSON.stringify({cmd:"set-channel",ch:hook}));
-                updateHookName(JSON.parse(localStorage['hooks'])[hook]['name'] || hook) // Bleh, hookStorage is defined below... lame! Maybe functions should be moved into their own block?
+                if (localStorage['hooks']) { 
+                    updateHookName(JSON.parse(localStorage['hooks'])[hook]['name'] || hook); // Bleh, hookStorage is defined below... lame! Maybe functions should be moved into their own block?
+                }
             }
 
         }
@@ -707,7 +709,7 @@ function displayPersistentLogEntry(entry) {
 
 function refreshPersistentScriptLog(log) {
     $("#persistent-script-log").html('');
-    for (var i = log.length - 1; i >= 0;  i++) {
+    for (var i = log.length - 1; i >= 0;  i--) {
         displayPersistentLogEntry(log[i]);
     }
 }
@@ -762,10 +764,7 @@ function getPersistentLog() {
     try {
         tmp = JSON.parse(localStorage['persistentLog']) 
     } catch (e) {}
-    if (!tmp) {
-        tmp = [];
-    }
-    return tmp;
+    return tmp || [];
 }
 
 function processResponse(r, hook) {
