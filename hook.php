@@ -23,7 +23,7 @@ switch ($_GET['server_type']) {
         $url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . preg_replace('/\:.*/', '', $_SERVER['HTTP_HOST']) . ':' . $port . '/chef'; 
     case 'xhr':
     default:
-        $url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/hook.php', '/server.php', $_SERVER['SCRIPT_NAME']);
+        $url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/hook.php', '/server-xhr.php', $_SERVER['SCRIPT_NAME']);
 }
 
 $ch = 'c'.crc32(rand() . time());
