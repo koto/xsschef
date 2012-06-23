@@ -121,15 +121,18 @@ var server = http.createServer(function(request, response) {
         return;
     }
     
-    if (request.url.match(/\/echo\?/)) {
+    if (request.url.match(/\/echo\?/) || request.url.match(/\/echo\.php\?/)) {
         var params = url.parse(request.url, true);
         response.writeHead(200, {'content-type' : 'text/javascript'});
         response.end(params.query.c);
         return;
     }
     
-    if (request.url == '/') {
-        request.url = '/console.html'; // quietly serve console.html (no redirect)
+    if (request.url == '/' || request.url == '/console.html') {
+    	response.statusCode = 302;
+        response.setHeader('Location', '/console.html?ws_port=' + port);
+        response.end();
+        return;
     }
     
     fileserver.serve(request, response);
@@ -307,6 +310,17 @@ wsServer.on('request', function(request) {
                     if (connection.isC2C) {
                         resultStorage = {}
                         commandStorage = {}
+                    }
+                break;
+                case 'list':
+                    console.log('list');
+                    if (connection.isC2C) {
+                        var hooks = [];
+                        connections.forEach(function(c) {
+                            if (c.isHook) 
+                                hooks.push({ch: c.channel, ip: c.remoteAddress, lastActive: c.lastActive});
+                        });
+                        connection.sendUTF(JSON.stringify([[{type:'list', result: hooks}]]));
                     }
                 break;
                 default:

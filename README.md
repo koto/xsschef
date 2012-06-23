@@ -33,11 +33,24 @@ Installation & usage
 ------------
 ### Setup CHeF server (on attacker's machine)
 
-ChEF comes in two different flavours: *PHP/XHR* and *node.js/websocket* version. 
+ChEF has three spearate backends to choose from: *PHP/XHR*, *PHP/WebSockets* and *node.js/WebSockets* version.
+
 #### PHP 
-PHP requires only a PHP and a HTTP server (Apache/nginx) for hosting attacker command & control center, but the communication with hooked browsers has certain latency as it is based on XMLHttpRequest polling.
+PHP backends require only a PHP and a HTTP server (Apache/nginx) for hosting attacker command & control center.
+
+You can choose one of two flavours:
+
+ WebSockets (recommended) - requires launching a PHP WebSocket server that will listen on a separate TCP port.
+ XHR - Legacy mode. Communication with hooked browsers has certain latency as it is based on XMLHttpRequest polling.
 
 To install PHP version just download the files somewhere within your document root.
+
+   $ mv xsschef /var/www/
+
+If you want to use XHR backend, you're done. If you want to use the WebSockets backend, additionally lauch a PHP WebSocket server:
+
+   $ php server.php [port] 2>log.txt
+
 #### Node.js
 Node.js version requires a [node.js](http://nodejs.org/) installation and is much faster as it is based on [WebSockets](http://dev.w3.org/html5/websockets/) protocol.
 
@@ -47,11 +60,12 @@ Installation:
       // windows users: npm install websocket@1.0.3
       // see https://github.com/Worlize/WebSocket-Node/issues/28
     $ npm install node-static
-    $ node server.js [chosen-tcp-port]
+    $ node server.js [chosen-tcp-port] 2>log.txt
     
 ### Launch CHeF console (on attacker's machine)
-  - PHP: http://127.0.0.1/console.php
-  - node.js: http://127.0.0.1:8080/
+  - PHP/WebSockets: http://127.0.0.1/console.html&ws_port=8080
+  - PHP/XHR: http://127.0.0.1/console.html?server_type=xhr
+  - node.js/WebSockets: http://127.0.0.1:8080/
 
 ### Hook Chrome extension (on victim's)
 First, you have to find a XSS vulnerability in a Google Chrome addon. I won't help you here.
