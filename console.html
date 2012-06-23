@@ -829,7 +829,12 @@ function processResponse(r, hook) {
 
 $(function() {
 
-    var hook_url = document.location.href.replace(/\/console\.html(\?.*)?/, '/hook.php?port=' + escape(getParam('ws_port'));
+    var hook_url = document.location.href.replace(/\/console\.html(\?.*)?/, '/hook.php');
+    var wsp;
+    if (wsp = getParam('ws_port')) {
+        hook_url += '?server_type=ws&port=' + escape(wsp);
+    }
+    
     var echo_js_url = document.location.href.replace(/\/console.html(\?.*)?/, '/echo.php');
 
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });

