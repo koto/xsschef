@@ -515,7 +515,9 @@ function prettyPrint(m) {
     return JSON.stringify(m, undefined, 3);
 }
 
-if (getParam('server_type') == 'ws') { // served through Node.js, use websockets
+if (getParam('server_type') == 'xhr') { 
+    ws = false;
+} else { // backed by WebSockets server
     try {
     	if (typeof MozWebSocket !== 'undefined') {
             WebSocket = MozWebSocket;
@@ -555,10 +557,7 @@ if (getParam('server_type') == 'ws') { // served through Node.js, use websockets
             log(s);
         }
     }
-    var currentListCallback = al;
-    
-} else { // served through Apache, use XHR php scripts
-    ws = false;
+    var currentListCallback = al;   
 }
 
 var sendCmd = function(cmd, param, additional) {
