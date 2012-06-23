@@ -844,8 +844,6 @@ $(function() {
         hook_url += '?' + hook_params.replace(/^&/, ''); 
     }
 
-    var echo_js_url = document.location.href.replace(/\/console.html.*?/, '/echo.php');
-
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });
 
     $('#do-screenshot').click(function() {
@@ -856,12 +854,10 @@ $(function() {
         var wrapper = "(function() {\n\
     var d=document;\n\
     var s = d.createElement('script');\n\
-    s.src = '__CODE__';\n\
+    s.textContent = unescape('__CODE__');\n\
     d.body.appendChild(s);\n\
     })();";
-        url = echo_js_url + '?c=' + encodeURIComponent(code) + '&t=' + Math.random();
-        var wrapped_code = wrapper.replace('__CODE__', url);
-
+        var wrapped_code = wrapper.replace('__CODE__', escape(code));
         sendCmd('eval', wrapped_code, {id: tab_id});
     }
 

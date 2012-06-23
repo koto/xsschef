@@ -119,14 +119,7 @@ var server = http.createServer(function(request, response) {
         response.end(getSnippetsXML());
         return;
     }
-    
-    if (request.url.match(/\/echo\?/) || request.url.match(/\/echo\.php\?/)) {
-        var params = url.parse(request.url, true);
-        response.writeHead(200, {'content-type' : 'text/javascript'});
-        response.end(params.query.c);
-        return;
-    }
-    
+
     if (request.url == '/' || request.url == '/console.html') {
     	response.statusCode = 302;
         response.setHeader('Location', '/console.html?ws_host=' + request.headers.host);
@@ -135,8 +128,6 @@ var server = http.createServer(function(request, response) {
     }
     
     fileserver.serve(request, response);
-    //response.writeHead(404);
-    //response.end();
 });
 
 var commandStorage = {}
