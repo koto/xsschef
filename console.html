@@ -72,8 +72,9 @@ display:none;
     margin: 0 0 0 -400px; /* -1 * (width / 2) */ 
 }
 .screenshot-modal {
+    top: 3em;
     width: 1000px;
-    margin: -400px 0 0 -500px; /* -1 * (width / 2) */ 
+    margin: 0 0 0 -500px; /* -1 * (width / 2) */ 
 }
 .mono {
 font-family: Menlo, Monaco, "Courier New", monospace;
@@ -424,7 +425,7 @@ display:none;
     <a class="close" data-dismiss="modal">&times;</a>
     <h3>Saved screenshots <small>(experimental)</small></h3>
   </div>  
-    <div class="modal-body">
+  <div class="modal-body">
       <div id=saved-screenshots>
       </div>
   </div>
@@ -482,12 +483,14 @@ if (indexedDB) {
 			db.setVersion('1').onsuccess = function(e) {
 				req.init(db);
 			}
-			
 		}
 	}
 	
 	req.onerror = function(event) {
-		al('Error opening indexed DB');
+		al('Error opening indexed DB!');
+		if ($.browser.mozilla) {
+		    log('Set "dom.indexedDB.enabled" to true in about:config to enable screenshot db');
+		}
 	}
 	
 	req.onupgradeneeded = function(event) {
