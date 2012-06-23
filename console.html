@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
 <head>
 <!--
@@ -436,6 +437,7 @@ display:none;
 <script>
 
 var ws;
+var DEFAULT_WS_PORT = 8080;
 
 // current hook name
 var hook = localStorage['lastHook'] || '';
@@ -528,9 +530,9 @@ if (getParam('server_type') == 'xhr') {
         // get absolute url of current doc
         document.location.protocol.replace('http', 'ws') + '//'
          + document.location.host.replace(/:.*/, '')
-         + ':' + getParam('ws_port') + '/chef', 'chef');
+         + ':' + (getParam('ws_port') || DEFAULT_WS_PORT) + '/chef', 'chef');
     if (!ws) {
-        alert("Trouble connecting through WebSocket, use PHP/Apache version (?server_type=xhr) or other browser.");
+        alert("Trouble connecting through WebSocket, use PHP/XHR version (?server_type=xhr) or other browser.");
     } else {
         ws.onmessage = function(ev) {
             try {
@@ -828,20 +830,28 @@ function processResponse(r, hook) {
 
 $(function() {
 
-    var hook_url = document.location.href.replace(/\/console\.html(\?.*)?/, '/hook.php');
-    var wsp;
-    if (wsp = getParam('ws_port')) {
-        hook_url += '?server_type=ws&port=' + escape(wsp);
+    var hook_url = document.location.href
+                .replace(/\/console\.html.*/, '/hook.php');
+    
+    var hook_params = "";
+    if (getParam('server_type') == 'xhr') {
+        hook_params +='t=xhr';
+    }
+    if (getParam('ws_port') && getParam('ws_port') !== DEFAULT_WS_PORT) {
+        hook_params += '&p=' + escape(getParam('ws_port'));
     }
     
-    var echo_js_url = document.location.href.replace(/\/console.html(\?.*)?/, '/echo.php');
+    if (hook_params) {
+        hook_url += '?' + hook_params.replace(/^&/, ''); 
+    }
+
+    var echo_js_url = document.location.href.replace(/\/console.html.*?/, '/echo.php');
 
     $('.hook-url').each(function() {$(this).text($(this).text().replace(/__HOOK_URL__/g, hook_url)) });
 
     $('#do-screenshot').click(function() {
         sendCmd('screenshot');
     });
-
 
     function evalWithSandboxBypass(code, tab_id) {
         var wrapper = "(function() {\n\

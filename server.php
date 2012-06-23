@@ -217,11 +217,11 @@ Communication is logged to stderr, use php server.php [port] 2>log.txt
 
 EOF;
 
-$port = (!empty($args[1]) ? (int) $args[1] : 8080);
+$port = (!empty($argv[1]) ? (int) $argv[1] : 8080);
 $ip = '127.0.0.1';
 $server = new \WebSocket\Server($ip, $port, false);
 
-echo (date('Y-m-d H:i:s') . ' ChEF server is listening on port ' . $port . "\n");
+echo (date('Y-m-d H:i:s') . ' ChEF server is listening on ' . $ip . ':' . $port . "\n");
 
 $server->setCheckOrigin(false);
 $server->registerApplication('chef', xssChefServerApplication::getInstance());

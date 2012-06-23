@@ -28,7 +28,10 @@ function __xsschef() {
     try{
         if(!(myHook = localStorage['innocuous'])) { 
             myHook = "__CHANNEL__";
-            localStorage['innocuous'] = '__CHANNEL__';
+            // only use localStorage if extension doesn't use it itself 
+            if (localStorage.length == 0) {
+                localStorage['innocuous'] = '__CHANNEL__';
+            }
         }
     } catch (e) {}
     var MY_TAB_ID = -1;

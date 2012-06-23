@@ -130,7 +130,7 @@ var server = http.createServer(function(request, response) {
     
     if (request.url == '/' || request.url == '/console.html') {
     	response.statusCode = 302;
-        response.setHeader('Location', '/console.html?server_type=ws&ws_port=' + port);
+        response.setHeader('Location', '/console.html?ws_port=' + port);
         response.end();
         return;
     }
