@@ -212,13 +212,13 @@ echo <<<EOF
 XSS ChEF server
 by Krzysztof Kotowicz - kkotowicz at gmail dot com
 
-Usage: php server.php [port]
+Usage: php server.php [port=8080] [host=127.0.0.1]
 Communication is logged to stderr, use php server.php [port] 2>log.txt
 
 EOF;
 
 $port = (!empty($argv[1]) ? (int) $argv[1] : 8080);
-$ip = '127.0.0.1';
+$ip = (!empty($argv[2]) ? $argv[2] : '127.0.0.1');
 $server = new \WebSocket\Server($ip, $port, false);
 
 echo (date('Y-m-d H:i:s') . ' ChEF server is listening on ' . $ip . ':' . $port . "\n");

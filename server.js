@@ -47,7 +47,6 @@ var prepareHook = function(req) {
                     .replace(/__CHANNEL__/g, channel)
                     .replace(/__CMD_CHANNEL__/g, channel + '-cmd');
     return modified;
-    
 }
 
 var readSnippets = function() {
@@ -130,7 +129,7 @@ var server = http.createServer(function(request, response) {
     
     if (request.url == '/' || request.url == '/console.html') {
     	response.statusCode = 302;
-        response.setHeader('Location', '/console.html?ws_port=' + port);
+        response.setHeader('Location', '/console.html?ws_host=' + request.headers.host);
         response.end();
         return;
     }
@@ -151,11 +150,13 @@ if (!port) {
 console.log("XSS ChEF server");
 console.log("by Krzysztof Kotowicz - kkotowicz at gmail dot com");
 console.log("");
-console.log("Usage: node server.js [port]");
+console.log("Usage: node server.js [port=8080]");
 console.log("Communication is logged to stderr, use node server.js [port] 2>log.txt");
 
+// todo: list interfaces IPs
+
 server.listen(port, function() {
-    console.log((new Date()) + ' ChEF server is listening on port ' + port);
+    console.log((new Date()) + ' ChEF server is listening on <all-interfaces> port ' + port);
     console.log((new Date()) + ' Console URL: http://127.0.0.1:' + port + '/');
     console.log((new Date()) + ' Hook URL:    http://127.0.0.1:' + port + '/hook');
 });

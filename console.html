@@ -437,7 +437,7 @@ display:none;
 <script>
 
 var ws;
-var DEFAULT_WS_PORT = 8080;
+var DEFAULT_WS_HOST = document.location.host.replace(/:.*/, '') + ':8080';
 
 // current hook name
 var hook = localStorage['lastHook'] || '';
@@ -529,8 +529,7 @@ if (getParam('server_type') == 'xhr') {
     ws = new ReconnectingWebSocket(
         // get absolute url of current doc
         document.location.protocol.replace('http', 'ws') + '//'
-         + document.location.host.replace(/:.*/, '')
-         + ':' + (getParam('ws_port') || DEFAULT_WS_PORT) + '/chef', 'chef');
+        + (getParam('ws_host') || DEFAULT_WS_HOST) + '/chef', 'chef');
     if (!ws) {
         alert("Trouble connecting through WebSocket, use PHP/XHR version (?server_type=xhr) or other browser.");
     } else {
@@ -837,8 +836,8 @@ $(function() {
     if (getParam('server_type') == 'xhr') {
         hook_params +='t=xhr';
     }
-    if (getParam('ws_port') && getParam('ws_port') !== DEFAULT_WS_PORT) {
-        hook_params += '&p=' + escape(getParam('ws_port'));
+    if (getParam('ws_host') && getParam('ws_host') !== DEFAULT_WS_HOST) {
+        hook_params += '&h=' + escape(getParam('ws_host'));
     }
     
     if (hook_params) {

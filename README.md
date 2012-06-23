@@ -49,7 +49,7 @@ To install PHP version just download the files somewhere within your document ro
 
 If you want to use XHR backend, you're done. If you want to use the WebSockets backend, additionally lauch a PHP WebSocket server:
 
-   $ php server.php [port] 2>log.txt
+   $ php server.php [port=8080] [host=127.0.0.1] 2>log.txt
 
 #### Node.js
 Node.js version requires a [node.js](http://nodejs.org/) installation and is much faster as it is based on [WebSockets](http://dev.w3.org/html5/websockets/) protocol.
@@ -63,7 +63,7 @@ Installation:
     $ node server.js [chosen-tcp-port] 2>log.txt
     
 ### Launch CHeF console (on attacker's machine)
-  - PHP/WebSockets: http://127.0.0.1/console.html&ws_port=8080
+  - PHP/WebSockets: http://127.0.0.1/console.html?ws_host=127.0.0.1:8080
   - PHP/XHR: http://127.0.0.1/console.html?server_type=xhr
   - node.js/WebSockets: http://127.0.0.1:8080/
 
