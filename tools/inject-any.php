@@ -37,18 +37,15 @@ Example:
     echo "Existing manifest: ";
     print_r($manifest);
     echo "\n";
-    
-    if (!$manifest['background_page']) {
-        echo "Adding background page\n";
-        $manifest['background_page'] = 'bckg_.html';
-    }
 
+    $t->assertBackgroundPage($manifest, 'bckg');
+    
     // injecting any script from stdin
     echo "Reading payload...\n";
     $payload = file_get_contents('php://stdin');
     echo "Injecting...\n";
 
-    $injected = $t->injectScript($manifest['background_page'], $payload);
+    $injected = $t->injectScript($payload);
     
     if (!empty($argv[2])) { 
         $perms = explode(',', $argv[2]);
@@ -58,14 +55,14 @@ Example:
             'permissions' => $perms,
         );
     
-        $manifest = array_merge_recursive($manifest, $new_properties);    
+        $t->setManifest(array_merge_recursive($t->getManifest(), $new_properties));    
     }
 
     
     echo "Saving...\n";    
     //write
-    $t->saveFile($manifest['background_page'], $injected);
-    $t->saveManifest($manifest);
+    $t->saveFile($t->getBackgroundPage(), $injected);
+    $t->saveManifest();
     echo "Done.\n";
 } catch (Exception $e) {
     file_put_contents('php://stderr', $e->getMessage() . "\n");
