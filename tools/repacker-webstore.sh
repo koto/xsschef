@@ -16,7 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Usage:
-# ./repacker-webstore.sh <extension-id> <xsschef-server-url>
+# ./repacker-webstore.sh <extension-id> <xsschef-server-url> <output.crx>
 #
 # Will download extension from Google Chrome Webstore and replace
 # the .crx file with a version with xsschef embedded.
@@ -41,6 +41,5 @@ curl -L "$URL" -o "$TMPDIR/org.crx"
 if (( $? )) ; then 
     bailout
 fi
-$DIR/repacker.sh "$TMPDIR/org.crx" "new.crx" "$2" repack || bailout 
+$DIR/repacker.sh "$TMPDIR/org.crx" "$3" "$2" repack || bailout 
 rm $TMPDIR/org.crx
-echo "new.crx"
