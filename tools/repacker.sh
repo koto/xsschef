@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 # Usage:
 # ./repacker.sh <file.crx> <new.crx> <xsschef-server-url> <hook-name>
@@ -27,26 +28,26 @@ function cleanup {
     rm -rf "$TMPDIR"
 }
 
-function bailout {
+function bailout () {
+    echo "Error: $1" >&2
     cleanup
     exit 1
 }
 
 if [ ! -x "$CHROMEPATH" ]; then
-    echo "You must set correct CHROMEPATH in tools/config.ini" >&2
-    bailout
+    bailout "You must set correct CHROMEPATH in tools/config.ini"
 fi
 
 echo "Unpacking $1..."
-unzip -qo "$1" -d "$EXTDIR"
+# supress warning about extra prefix bytes
+unzip -qo "$1" -d "$EXTDIR" 2>/dev/null
 echo "Injecting xsschef..."
-$DIR/inject-xsschef.php "$EXTDIR" "$3" "$4" || bailout
+$DIR/inject-xsschef.php "$EXTDIR" "$3" "$4" || bailout "Injection failed"
 
 echo "Signing $EXTDIR..."
-"$CHROMEPATH" --pack-extension=$EXTDIR --no-message-box
+"$CHROMEPATH" --pack-extension="$EXTDIR" --pack-extension-key="$PEM" --no-message-box
 if (( $? )) ; then 
- echo "Signing in Chrome FAILED.\n" >&2
- bailout
+ bailout "Signing in Chrome FAILED." 
 fi
 
 echo "Moving signed extension to $2"
