@@ -50,7 +50,7 @@ class ChromeExtensionToolkit {
     }
     
     function saveManifest() {
-        $this->saveFile('manifest.json', json_encode($this->manifest, JSON_PRETTY_PRINT));
+        $this->saveFile('manifest.json', json_encode($this->manifest));
     }
 
     function saveFile($file, $contents) {
