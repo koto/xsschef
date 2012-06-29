@@ -8,11 +8,27 @@
 @see http://blog.kotowicz.net
 
 */
-$url = 'https://chrome.google.com/webstore/ajax/item?hl=en&gl=US&pv=1328752380&token={{OFFSET}}%2C1358b325420&count=200&marquee=true&category=popular&sortBy=0&rt=j';
+$url = 'https://chrome.google.com/webstore/ajax/item?hl=en&gl=US&pv={{GEN}}&count=200&token={{OFFSET}}%2C138379e14e8&marquee=false&category=popular&sortBy=0&rt=j';
 
 $how_many = 1000;
 $per_page = 200;
 $ext = array();
+
+// get webstore generation
+$new_url = 'https://chrome.google.com/webstore/';
+$ch = curl_init($new_url);
+ 
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+curl_close($ch);
+
+$matches = array();
+if (!preg_match('#/static/(\d+)#', $response, $matches)) {
+    fwrite(STDERR, "Error: couldn't find gen");
+    exit(1);
+}
+
+$url = str_replace("{{GEN}}", $matches[1], $url);
 
 for ($i = 0; $i < $how_many; $i += $per_page) {
     $new_url = str_replace('{{OFFSET}}', $i, $url);
