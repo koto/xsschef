@@ -23,9 +23,10 @@ if (count($argv) == 3) {
     $skip_existing = false;
 } else {
     $f = file_get_contents('php://stdin');
-    $addons = json_decode($f);
+    $addons = json_decode($f, true);
     unset($f);
 }
+
 $cnt = count($addons);
 $i = 0;
 while (list($k, $v) = each($addons)) {
