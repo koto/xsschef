@@ -7,7 +7,7 @@ Usage:
  php download.php < addons.json
  php download.php <addon-guid> <addon-name>
 
-Req: openssl extension, unzip command line
+Req: openssl extension, unzip command line, curl command line
 
 @author Krzysztof Kotowicz kkotowicz<at>gmail<dot>com
 @see http://blog.kotowicz.net
@@ -24,13 +24,16 @@ if (count($argv) == 3) {
 } else {
     $f = file_get_contents('php://stdin');
     $addons = json_decode($f);
+    unset($f);
 }
-
-
-
+$cnt = count($addons);
+$i = 0;
 while (list($k, $v) = each($addons)) {
+    echo "[$i / $cnt ] : ";
     download($k, $v);
+    $i = $i + 1;
 }
+echo "Done.\n";
 
 function download($id, $name) {
     global $output_dir, $skip_existing;
@@ -43,16 +46,23 @@ function download($id, $name) {
 	}
 
     echo "Downloading $name...\n";
-    $crx = file_get_contents('https://clients2.google.com/service/update2/crx?response=redirect&x=id%3D'.$id.'%26lang%3Dpl%26uc');
-    if ($crx) {
-	$dir = $output_dir . DIRECTORY_SEPARATOR . $safename . '-' . $id;
-	if (!is_dir($dir)) {
-	    mkdir($dir, 0700, true);
-	}
-	
-	file_put_contents($dir . DIRECTORY_SEPARATOR . $id. '.crx', $crx);
-	echo "Saving " . strlen($crx) . " bytes to $dir\n";
-	echo "Unpacking...";
-	shell_exec("unzip -o $dir/$id.crx -d $dir");
+    $url = 'https://clients2.google.com/service/update2/crx?response=redirect&x=id%3D'.$id.'%26lang%3Dpl%26uc';
+    
+    system("curl -L " . escapeshellarg($url) . " -o tmp.crx", $ret);
+    
+    if ($ret) {
+        unlink('tmp.crx');
+        return;
     }
+    
+    $dir = $output_dir . DIRECTORY_SEPARATOR . $safename . '-' . $id;
+    if (!is_dir($dir)) {
+        mkdir($dir, 0700, true);
+    }
+    echo "Saving to $dir\n";
+    rename('tmp.crx', $dir . DIRECTORY_SEPARATOR . $id. '.crx');
+    echo "Unpacking...";
+    shell_exec("unzip -o $dir/$id.crx -d $dir");
 }
+
+// memory errors are likely, just rerun the file
