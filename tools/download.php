@@ -28,11 +28,11 @@ if (count($argv) == 3) {
 }
 
 $cnt = count($addons);
-$i = 0;
+$i = 1;
 while (list($k, $v) = each($addons)) {
     echo "[$i / $cnt ] : ";
     download($k, $v);
-    $i = $i + 1;
+    $i = $i++;
 }
 echo "Done.\n";
 
@@ -49,6 +49,7 @@ function download($id, $name) {
     echo "Downloading $name...\n";
     $url = 'https://clients2.google.com/service/update2/crx?response=redirect&x=id%3D'.$id.'%26lang%3Dpl%26uc';
     
+    // limit to max 10 mb extensions 
     system("curl -L " . escapeshellarg($url) . " -o tmp.crx", $ret);
     
     if ($ret) {

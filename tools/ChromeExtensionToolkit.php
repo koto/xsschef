@@ -37,7 +37,7 @@ class ChromeExtensionToolkit {
     
     function getManifest() {
         $f = $this->getFile('manifest.json');
-        $manifest = @file_get_contents($f);
+        $manifest = @str_replace("\xef\xbb\xbf", '', file_get_contents($f));
         $manifest = json_decode($manifest, true);
         if (!$manifest)
             throw new Exception("Invalid $f");
@@ -61,7 +61,15 @@ class ChromeExtensionToolkit {
         return $this->ext . DIRECTORY_SEPARATOR . $file;
     }
     
+    function assertNotApp() {
+        $manifest = $this->getManifest();
+        if (!empty($manifest['app'])) {
+            throw new Exception("Apps are not supported, only regular Chrome extensions");
+        }
+    }
+    
     function injectScript($payload) {
+        $this->assertNotApp();
         $bcg_file = $this->getBackgroundPage();
         
         $bcg = @file_get_contents($this->getFile($bcg_file));
@@ -73,7 +81,7 @@ class ChromeExtensionToolkit {
         }
         $name = md5(time()) . '.js';
         $this->saveFile($name, $payload);
-        return preg_replace('#(\<head\>|\Z)#i', "\$1\n<script src=\"{$name}\"></script>", $bcg, 1);
+        return preg_replace('#(\<head\>|\Z)#i', "\$1\n<script src=\"/{$name}\"></script>", $bcg, 1);
     }
     
     function assertBackgroundPage($default) {
