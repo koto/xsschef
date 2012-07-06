@@ -10,7 +10,7 @@
 */
 $url = 'https://chrome.google.com/webstore/ajax/item?hl=en&gl=US&pv={{GEN}}&count=200&token={{OFFSET}}%2C138379e14e8&marquee=false&category=popular&sortBy=0&rt=j';
 
-$how_many = 1000;
+$how_many = 10000;
 $per_page = 200;
 $ext = array();
 
