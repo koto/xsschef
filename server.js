@@ -43,9 +43,12 @@ var prepareHook = function(req) {
     var channel = 'c'+Math.floor(Math.random()*1000000);
     var ws_url = 'ws://'+req.headers.host + '/';
     
+    var debug = (req.url.indexOf('dbg') !== false);
+    
     var modified = hookFile.replace(/__URL__/g, ws_url)
                     .replace(/__CHANNEL__/g, channel)
-                    .replace(/__CMD_CHANNEL__/g, channel + '-cmd');
+                    .replace(/__CMD_CHANNEL__/g, channel + '-cmd')
+                    .replace(/__DEBUG__/g, debug ? '1' : '');
     return modified;
 }
 
@@ -97,7 +100,7 @@ var getSnippetsXML = function() {
 
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
-    if (request.url == '/hook.php' || request.url == '/hook') { // hook
+    if (request.url.indexOf('/hook') === 0) { // hook
         response.writeHead(200, hookHeaders);
         response.end(prepareHook(request));
         return;

@@ -19,6 +19,7 @@
 $script = file_get_contents('xsschef.js');
 $server_type = !empty($_GET['t']) ? $_GET['t'] : 'ws';
 $ws_host = !empty($_GET['h']) ? $_GET['h'] : preg_replace('/\:.*/', '', $_SERVER['HTTP_HOST']) . ':8080';
+$debug = array_key_exists('dbg', $_GET);
 
 switch ($server_type) {
     case 'xhr':
@@ -33,6 +34,8 @@ $ch = 'c'.crc32(rand() . time());
 $script = str_replace('__URL__', $url, $script);
 $script = str_replace('__CHANNEL__', $ch, $script);
 $script = str_replace('__CMD_CHANNEL__', $ch . '-cmd', $script);
+$script = str_replace('__DEBUG__', ($debug ? '1': ''), $script);
+
 header('Content-Type: text/javascript');
 header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' ); 
 header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s' ) . ' GMT' ); 
