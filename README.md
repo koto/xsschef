@@ -2,7 +2,7 @@ XSS ChEF - Chrome Extension Exploitation Framework
 ======
 
 by [Krzysztof Kotowicz](http://blog.kotowicz.net)
-ver 0.1
+ver 1.0
 
 https://github.com/koto/xsschef
 
