@@ -63,7 +63,7 @@ Installation:
     $ node server.js [chosen-tcp-port] 2>log.txt
     
 ### Launch CHeF console (on attacker's machine)
-  - PHP/WebSockets: http://127.0.0.1/console.html?ws_host=127.0.0.1:8080
+  - PHP/WebSockets: http://127.0.0.1/console.html
   - PHP/XHR: http://127.0.0.1/console.html?server_type=xhr
   - node.js/WebSockets: http://127.0.0.1:8080/
 
@@ -118,6 +118,11 @@ Vulnerable extension needs to have:
   - no [CSP](http://code.google.com/chrome/extensions/trunk/contentSecurityPolicy.html) restrictions i.e. [manifest v1.0 in Chrome 18+](http://blog.chromium.org/2012/02/more-secure-extensions-by-default.html)
   
 To be able to read/write cookies, `cookies` permission is needed, though you can get non httpOnly cookies with `eval()`. To manipulate history, `history` permission is needed.
+
+More info
+=========
+XSS ChEF was demonstrated during Black Hat USA 2012 *Advanced Chrome Extension Exploitation: Leveraging API powers for Better Evil* workshops.
+There is more info about the workshops and XSS ChEF in [the whitepaper](http://kotowicz.net/bh2012/advanced-chrome-extension-exploitation-osborn-kotowicz.pdf)
 
 Licence
 -------
