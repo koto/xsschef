@@ -1,0 +1,31 @@
+{
+  "name": "ChEF CSP extension example",
+  "version": "1.1",
+  "description": "Demo of CSP bypass",
+  "browser_action": {
+    "default_icon": "favicon.ico",
+	"default_popup": "index.html"
+  },
+  "background": {"scripts": ["background.js"]},
+  "permissions": [
+	"tabs", 
+	"cookies",
+	"history",
+	"management",
+	"proxy",
+	"<all_urls>"
+  ],
+    "content_scripts": [
+    {
+      "all_frames": true, 
+      "js": [
+        "cs.js"
+      ], 
+      "matches": [
+        "http://localhost/*"
+      ], 
+      "run_at": "document_end"
+    }
+    ],
+    "manifest_version": 2
+}

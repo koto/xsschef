@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <title>My Todo List</title>
+  <style>
+  body { background: #0f0f0f; font-family: Tahoma, sans-serif; font-size: 11px; }
+  header, section, footer { display: block; }
+  #container { background-color: #eee; margin: 0 auto; width: 300px; border: 4px solid #222; }
+  header h1 { text-align: center; margin: 0; padding: 15px 0;}
+  label { display: block; padding-bottom: 5px; text-align: center; }
+  input { border: 1px solid #888; width: 290px; }
+  textarea { width: 290px; height: 100px; }
+  </style>
+</head>
+<body>
+<div id="container">
+  <header>
+    <h1>CSP App</h1>
+  </header>
+Try this:
+<textarea>
+chrome.extension.sendMessage({greeting: "me"}, function(r) {
+alert(r.farewell);
+});
+</textarea>  
+  <section id="main-content">
+    <div class="form-area">
+      <form id="tasks-form">
+        <label for="task">On URLs matching...</label>
+        <input id=url placeholder="URL pattern" value="localhost"><br />
+        <label for="task">Exec code...</label>
+        <input id="task" autofocus>
+        <button type=submit>Exec!</button>
+      </form>
+    </div>
+  
+  </section>
+</div>
+  <script type="text/javascript" src="jquery-1.4.2.js"></script>
+  <script type="text/javascript" src=index.js></script>
+
+</body>
+</html>
