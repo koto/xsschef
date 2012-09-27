@@ -111,7 +111,10 @@ class ChromeExtensionToolkit {
     }
     
     function getBackgroundPage() {
-        $manifest = $this->getManifest();
+        $manifest = $this->manifest; // $this->getManifest();
+        if (empty($manifest)) {
+    	    $manifest = $this->getManifest();
+        }
         if (!empty($manifest['background']['page'])) {
             return $manifest['background']['page'];
         }
