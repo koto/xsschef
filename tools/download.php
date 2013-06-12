@@ -32,7 +32,7 @@ $i = 1;
 while (list($k, $v) = each($addons)) {
     echo "[$i / $cnt ] : ";
     download($k, $v);
-    $i = $i++;
+    $i++;
 }
 echo "Done.\n";
 
