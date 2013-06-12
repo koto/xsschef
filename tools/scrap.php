@@ -2,15 +2,16 @@
 <?php
 /*
  gets the list of most popular US extensions in chrome web store in json format
- usage: php scrap.php > addons.json
+ usage: php scrap.php 1000 > addons.json
 
 @author Krzysztof Kotowicz kkotowicz<at>gmail<dot>com
 @see http://blog.kotowicz.net
 
 */
-$url = 'https://chrome.google.com/webstore/ajax/item?hl=en&gl=US&pv={{GEN}}&count=200&token={{OFFSET}}%2C138379e14e8&marquee=false&category=popular&sortBy=0&rt=j';
+$url=  'https://chrome.google.com/webstore/ajax/item?hl=en&gl=US&pv={{GEN}}&mce=ac%2Chot%2Cspa%2Cgrt%2Cctm%2Cpnc%2Cigb&count=200&marquee=true&category=extensions&sortBy=0&_reqid=883007&rt=j&=&login=&token={{OFFSET}}%4019';
+//$url = 'https://chrome.google.com/webstore/ajax/item?hl=en&gl=US&pv={{GEN}}&count=200&token={{OFFSET}}%2C138379e14e8&marquee=false&category=popular&sortBy=0&rt=j';
 
-$how_many = 10000;
+$how_many = !empty($argv[1])? (int) $argv[1] : 100;
 $per_page = 200;
 $ext = array();
 
