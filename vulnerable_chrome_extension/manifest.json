@@ -1,18 +1,18 @@
 {
-  "name": "ChEF vulnerable extension example (TodoList)",
+  "manifest_version": 2,
+  "name": "ChEF vulnerable",
   "version": "1.0",
-  "description": "A simple todo list in HTML5 with localStorage, vulnerable to XSS. Use to test ChEF. Forked from BeEF - http://beefproject.com/",
+  "description": "A simple todo list in HTML5 with localStorage, vulnerable to XSS. Use to test ChEF.",
   "browser_action": {
-    "default_icon": "favicon.ico",
-	"popup": "index.html"
+    "default_icon": "icon.png",
+  "default_popup": "index.html"
   },
-  "background_page": "background.html",
   "permissions": [
-	"tabs", 
-	"cookies",
-	"history",
-	"management",
-	"proxy",
-	"<all_urls>"
+  "tabs", 
+  "cookies",
+  "history",
+  "management",
+  "proxy",
+  "<all_urls>"
   ]
 }
