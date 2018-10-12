@@ -4,7 +4,7 @@
   "version": "1.0",
   "description": "A simple todo list in HTML5 with localStorage, vulnerable to XSS. Use to test ChEF.",
   "browser_action": {
-    "default_icon": "icon.png",
+    "default_icon": "favicon.ico",
   "default_popup": "index.html"
   },
   "permissions": [
